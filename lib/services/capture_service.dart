@@ -161,8 +161,9 @@ class CaptureService extends ChangeNotifier {
         }
 
         // Capture frame from stream as BGR (no JPEG encoding/file I/O)
+        // Use waitForFresh to ensure we get a frame captured AFTER the LED turned on
         sw.start();
-        final bgrFrame = await camera.captureFrameAsBGR();
+        final bgrFrame = await camera.captureFrameAsBGR(waitForFresh: true);
         final captureTime = sw.elapsedMilliseconds;
         sw.reset();
 

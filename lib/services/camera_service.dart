@@ -368,11 +368,18 @@ class CameraService extends ChangeNotifier {
   }
 
   /// Capture a frame from the stream as BGR bytes (no file I/O).
+  /// If [waitForFresh] is true, discards the current frame and waits for the next one.
+  /// Use waitForFresh after changing LED state to ensure the frame shows the new state.
   /// Returns null if no frame available or conversion fails.
-  Future<BGRFrame?> captureFrameAsBGR() async {
+  Future<BGRFrame?> captureFrameAsBGR({bool waitForFresh = false}) async {
     if (!_isStreaming) {
       debugPrint('[CAMERA] Not streaming');
       return null;
+    }
+
+    // If we need a fresh frame, clear the current one and wait for next arrival
+    if (waitForFresh) {
+      _latestBGRFrame = null;
     }
 
     // Frame is already converted to BGR in the stream callback - safe from GC

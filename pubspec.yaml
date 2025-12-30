@@ -1,0 +1,58 @@
+name: treecal
+description: "TreeCal - LED Position Mapper for Christmas tree LED mapping"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # MQTT client
+  mqtt_client: ^10.2.0
+
+  # Camera
+  camera: ^0.10.5+5
+
+  # Storage & file handling
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
+  # Permissions
+  permission_handler: ^11.0.1
+
+  # State management
+  provider: ^6.1.1
+
+  # Persistent settings
+  shared_preferences: ^2.2.2
+
+  # Computer Vision
+  opencv_dart: ^1.0.4
+
+  # Image processing (for fast frame capture from stream)
+  image: ^4.3.0
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+  # 3D Visualization (FOSS - MIT License)
+  ditredi: ^2.0.2
+  vector_math: ^2.1.4
+
+  # Compass/Magnetometer for camera angle detection
+  flutter_compass: ^0.8.0
+
+  # Archive/export
+  archive: ^3.4.9
+  share_plus: ^7.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

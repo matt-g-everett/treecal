@@ -93,7 +93,10 @@ class _ConeCalibrationOverlayState extends State<ConeCalibrationOverlay> {
       _baseHeight = _baseWidth * 0.25;         // 25% of width (typical perspective)
     }
 
-    _notifyChange();
+    // Defer initial callback to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifyChange();
+    });
   }
   
   void _notifyChange() {

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 import '../services/mqtt_service.dart';
 import '../services/camera_service.dart';
 import '../services/led_detection_service.dart';
@@ -21,14 +18,24 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
   ConeParameters? _coneParams;
   List<DetectedLED> _detectedLEDs = [];
   bool _isProcessing = false;
-  int _testLEDIndex = 0;
+  int _testLEDIndex = -1;  // Initialized from settings in didChangeDependencies
   bool _showOverlay = true;
-  
+
   // Detection parameters
   int _brightnessThreshold = 150;
   double _cameraFovDegrees = 60.0;
   double _minAngularConfidence = 0.2;
-  
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize to last LED on first build
+    if (_testLEDIndex < 0) {
+      final settings = Provider.of<SettingsService>(context, listen: false);
+      _testLEDIndex = settings.totalLeds - 1;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mqtt = Provider.of<MqttService>(context);
@@ -122,14 +129,14 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
           // Controls
           Expanded(
             flex: 2,
-            child: _buildControls(mqtt, camera),
+            child: _buildControls(mqtt, camera, settings),
           ),
         ],
       ),
     );
   }
   
-  Widget _buildControls(MqttService mqtt, CameraService camera) {
+  Widget _buildControls(MqttService mqtt, CameraService camera, SettingsService settings) {
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.black87,
@@ -177,7 +184,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
               // Increment
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
-                onPressed: _testLEDIndex < 199
+                onPressed: _testLEDIndex < settings.totalLeds - 1
                     ? () => setState(() => _testLEDIndex++)
                     : null,
                 color: Colors.white,
@@ -368,29 +375,43 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       _isProcessing = true;
       _detectedLEDs = [];
     });
-    
+
     try {
       // Turn off all LEDs first
       await mqtt.turnOffAllLEDs();
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // Lock camera and start streaming (same approach as capture_service)
+      await camera.lockForCapture();
+      await camera.startStreamCapture();
+
       // Turn on test LED
       await mqtt.setLED(_testLEDIndex, true);
-      
-      // Wait for camera adjustment
+
+      // Wait for camera exposure adjustment (first LED after dark scene)
       await Future.delayed(const Duration(milliseconds: 800));
-      
-      // Take picture
-      final tempDir = await getTemporaryDirectory();
-      final tempPath = path.join(tempDir.path, 'test_led_$_testLEDIndex.jpg');
-      await camera.takePicture(tempPath);
-      
+
+      // Capture frame from stream (waitForFresh ensures we get frame after LED turned on)
+      final bgrFrame = await camera.captureFrameAsBGR(waitForFresh: true);
+
       // Turn off test LED
       await mqtt.setLED(_testLEDIndex, false);
-      
-      // Detect LEDs with OpenCV
-      final detections = await LEDDetectionService.detectLEDs(
-        imagePath: tempPath,
+
+      // Stop streaming and unlock camera
+      await camera.stopStreamCapture();
+      await camera.unlockCapture();
+
+      if (bgrFrame == null) {
+        throw Exception('Failed to capture frame from camera stream');
+      }
+
+      // Detect LEDs with OpenCV (sync version - no isolate overhead)
+      final detections = LEDDetectionService.detectLEDsFromBGRSync(
+        bgrBytes: bgrFrame.bytes,
+        width: bgrFrame.width,
+        height: bgrFrame.height,
+        originalWidth: bgrFrame.originalWidth,
+        originalHeight: bgrFrame.originalHeight,
         coneParams: _coneParams,
         brightnessThreshold: _brightnessThreshold,
         minArea: 5.0,
@@ -398,27 +419,20 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
         cameraFovDegrees: _cameraFovDegrees,
         minAngularConfidence: _minAngularConfidence,
       );
-      
-      // Clean up temp file
-      try {
-        await File(tempPath).delete();
-      } catch (e) {
-        debugPrint('Could not delete temp file: $e');
-      }
-      
+
       setState(() {
         _detectedLEDs = detections;
         _isProcessing = false;
       });
-      
+
       // Show summary
       if (!mounted) return;
-      
+
       final goodDetections = detections.where((d) => d.detectionConfidence > 0.7).length;
       final message = detections.isEmpty
           ? 'No LEDs detected'
           : '$goodDetections high-confidence detection(s) out of ${detections.length} total';
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -427,12 +441,18 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
               : Colors.green,
         ),
       );
-      
+
     } catch (e) {
+      // Clean up on error
+      try {
+        await camera.stopStreamCapture();
+        await camera.unlockCapture();
+      } catch (_) {}
+
       setState(() => _isProcessing = false);
-      
+
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

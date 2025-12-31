@@ -25,30 +25,55 @@ class ConeParameters {
   final double baseY;          // Y position of base (fixed)
   final double baseWidth;      // Width of base oval
   final double baseHeight;     // Height of base oval (perspective)
-  
+  final double sourceWidth;    // Width of coordinate system these values are in
+  final double sourceHeight;   // Height of coordinate system these values are in
+
   ConeParameters({
     required this.apexY,
     required this.baseY,
     required this.baseWidth,
     required this.baseHeight,
+    this.sourceWidth = 0,
+    this.sourceHeight = 0,
   });
-  
+
   double get treeHeightPixels => baseY - apexY;
-  
+
   /// Convert pixel Y coordinate to normalized height (0-1)
   /// where 0 = base, 1 = apex
   double pixelYToNormalizedHeight(double pixelY) {
     if (treeHeightPixels == 0) return 0;
     return (baseY - pixelY) / treeHeightPixels;
   }
-  
+
   /// Get expected radius at a given pixel Y position
   double radiusAtPixelY(double pixelY) {
     final h = pixelYToNormalizedHeight(pixelY);
     // Linear taper: r(h) = r_base * (1 - h)
     return (baseWidth / 2) * (1 - h);
   }
-  
+
+  /// Scale cone parameters to a different image size.
+  /// Used to convert from preview coordinates to camera image coordinates.
+  ConeParameters scaledTo(double targetWidth, double targetHeight) {
+    if (sourceWidth <= 0 || sourceHeight <= 0) {
+      // No source dimensions - can't scale, return as-is
+      return this;
+    }
+
+    final scaleX = targetWidth / sourceWidth;
+    final scaleY = targetHeight / sourceHeight;
+
+    return ConeParameters(
+      apexY: apexY * scaleY,
+      baseY: baseY * scaleY,
+      baseWidth: baseWidth * scaleX,
+      baseHeight: baseHeight * scaleY,
+      sourceWidth: targetWidth,
+      sourceHeight: targetHeight,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'apex_y_pixels': apexY,
     'base_y_pixels': baseY,
@@ -56,6 +81,8 @@ class ConeParameters {
     'base_height_pixels': baseHeight,
     'tree_height_pixels': treeHeightPixels,
     'perspective_ratio': baseHeight / baseWidth,
+    'source_width': sourceWidth,
+    'source_height': sourceHeight,
   };
 }
 
@@ -77,7 +104,7 @@ class _ConeCalibrationOverlayState extends State<ConeCalibrationOverlay> {
 
     // Fixed cone height (fills most of screen)
     _apexY = screenHeight * 0.10;   // 10% from top
-    _baseY = screenHeight * 0.90;   // 90% from top
+    _baseY = screenHeight * 0.85;   // 85% from top (leaves margin at bottom)
 
     // Load saved dimensions or use defaults
     final savedWidth = widget.settings.coneBaseWidth;
@@ -105,6 +132,8 @@ class _ConeCalibrationOverlayState extends State<ConeCalibrationOverlay> {
       baseY: _baseY,
       baseWidth: _baseWidth,
       baseHeight: _baseHeight,
+      sourceWidth: widget.previewSize.width,
+      sourceHeight: widget.previewSize.height,
     ));
   }
   

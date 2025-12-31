@@ -3,38 +3,57 @@ import 'dart:typed_data';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'dart:math' as math;
 import '../screens/cone_calibration_overlay.dart' show ConeParameters;
+import 'detection_clamping_service.dart';
 
 /// Detected LED information
 class DetectedLED {
-  final double x;
-  final double y;
+  final double x;              // Original detection X
+  final double y;              // Original detection Y
+  final double clampedX;       // X clamped to cone bounds (for front surface)
+  final double clampedY;       // Y clamped to cone bounds (for front surface)
+  final double clampedBackX;   // X clamped to cone bounds (for back surface)
+  final double clampedBackY;   // Y clamped to cone bounds (for back surface)
+  final bool wasClamped;       // Whether clamping was applied
   final double brightness;
   final double area;
   final double detectionConfidence;  // Is this a real LED?
   final double angularConfidence;     // How accurate is the angle?
   final double normalizedHeight;
   final bool inConeBounds;
-  
+
   DetectedLED({
     required this.x,
     required this.y,
+    double? clampedX,
+    double? clampedY,
+    double? clampedBackX,
+    double? clampedBackY,
+    this.wasClamped = false,
     required this.brightness,
     required this.area,
     required this.detectionConfidence,
     required this.angularConfidence,
     required this.normalizedHeight,
     required this.inConeBounds,
-  });
-  
+  }) : clampedX = clampedX ?? x,
+       clampedY = clampedY ?? y,
+       clampedBackX = clampedBackX ?? x,
+       clampedBackY = clampedBackY ?? y;
+
   /// Overall confidence for display (detection quality)
   double get displayConfidence => detectionConfidence;
-  
+
   /// Weight for triangulation (combines detection + angular)
   double get triangulationWeight => detectionConfidence * angularConfidence;
-  
+
   Map<String, dynamic> toJson() => {
     'x': x,
     'y': y,
+    'clamped_x': clampedX,
+    'clamped_y': clampedY,
+    'clamped_back_x': clampedBackX,
+    'clamped_back_y': clampedBackY,
+    'was_clamped': wasClamped,
     'brightness': brightness,
     'area': area,
     'detection_confidence': detectionConfidence,
@@ -275,20 +294,46 @@ class LEDDetectionService {
         minConfidence: minAngularConfidence,
       );
 
-      // Calculate normalized height
+      // Calculate normalized height and clamping
       double normalizedHeight = 0;
       bool inConeBounds = true;
+      double clampedX = cx;
+      double clampedY = cy;
+      double clampedBackX = cx;
+      double clampedBackY = cy;
+      bool wasClamped = false;
 
       if (cone != null) {
-        // Use original coordinates for cone calculations
-        normalizedHeight = (cone.baseY - cy) / cone.treeHeightPixels;
-        normalizedHeight = normalizedHeight.clamp(0.0, 1.0);
+        // Check if in bounds and clamp if not
         inConeBounds = _isInConeBounds(cx, cy, cone, originalWidth);
+
+        // Apply clamping for both front and back surface candidates
+        final (frontClamped, backClamped) = DetectionClampingService.clampForTriangulation(
+          x: cx,
+          y: cy,
+          imageWidth: originalWidth,
+          coneParams: cone,
+        );
+
+        clampedX = frontClamped.x;
+        clampedY = frontClamped.y;
+        clampedBackX = backClamped.x;
+        clampedBackY = backClamped.y;
+        wasClamped = frontClamped.wasClamped || backClamped.wasClamped;
+
+        // Calculate normalized height using clamped Y (front surface)
+        normalizedHeight = (cone.baseY - clampedY) / cone.treeHeightPixels;
+        normalizedHeight = normalizedHeight.clamp(0.0, 1.0);
       }
 
       detections.add(DetectedLED(
         x: cx,  // Original-scale coordinates
         y: cy,
+        clampedX: clampedX,
+        clampedY: clampedY,
+        clampedBackX: clampedBackX,
+        clampedBackY: clampedBackY,
+        wasClamped: wasClamped,
         brightness: brightness,
         area: originalArea,  // Original-scale area
         detectionConfidence: detectionConfidence,

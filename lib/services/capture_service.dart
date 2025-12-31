@@ -174,6 +174,12 @@ class CaptureService extends ChangeNotifier {
             debugPrint('Error capturing frame for LED $i');
           } else {
             sw.start();
+            // Scale cone parameters from preview coordinates to camera image coordinates
+            final scaledConeParams = coneParams?.scaledTo(
+              bgrFrame.originalWidth.toDouble(),
+              bgrFrame.originalHeight.toDouble(),
+            );
+
             // Use sync version to avoid isolate spawn overhead (~200ms savings)
             final detections = LEDDetectionService.detectLEDsFromBGRSync(
               bgrBytes: bgrFrame.bytes,
@@ -181,7 +187,7 @@ class CaptureService extends ChangeNotifier {
               height: bgrFrame.height,
               originalWidth: bgrFrame.originalWidth,
               originalHeight: bgrFrame.originalHeight,
-              coneParams: coneParams,
+              coneParams: scaledConeParams,
             );
             detectTime = sw.elapsedMilliseconds;
             sw.reset();

@@ -42,20 +42,33 @@ class CameraPosition {
 class LEDObservation {
   final int ledIndex;
   final int cameraIndex;
-  final double pixelX;
-  final double pixelY;
+  final double pixelX;           // Original detection X
+  final double pixelY;           // Original detection Y
+  final double clampedFrontX;    // Clamped X for front surface
+  final double clampedFrontY;    // Clamped Y for front surface
+  final double clampedBackX;     // Clamped X for back surface
+  final double clampedBackY;     // Clamped Y for back surface
+  final bool wasClamped;         // Whether clamping was applied
   final double detectionConfidence;
   final double angularConfidence;
-  
+
   LEDObservation({
     required this.ledIndex,
     required this.cameraIndex,
     required this.pixelX,
     required this.pixelY,
+    double? clampedFrontX,
+    double? clampedFrontY,
+    double? clampedBackX,
+    double? clampedBackY,
+    this.wasClamped = false,
     required this.detectionConfidence,
     required this.angularConfidence,
-  });
-  
+  }) : clampedFrontX = clampedFrontX ?? pixelX,
+       clampedFrontY = clampedFrontY ?? pixelY,
+       clampedBackX = clampedBackX ?? pixelX,
+       clampedBackY = clampedBackY ?? pixelY;
+
   double get weight => detectionConfidence * angularConfidence;
 }
 
@@ -146,11 +159,35 @@ class TriangulationService {
           (a['detection_confidence'] as double) > (b['detection_confidence'] as double)
             ? a : b);
       
+      // Read original and clamped coordinates
+      final origX = (bestDetection['x'] as num).toDouble();
+      final origY = (bestDetection['y'] as num).toDouble();
+
+      // Use clamped coordinates if available, otherwise fall back to original
+      final clampedFrontX = bestDetection['clamped_x'] != null
+          ? (bestDetection['clamped_x'] as num).toDouble()
+          : origX;
+      final clampedFrontY = bestDetection['clamped_y'] != null
+          ? (bestDetection['clamped_y'] as num).toDouble()
+          : origY;
+      final clampedBackX = bestDetection['clamped_back_x'] != null
+          ? (bestDetection['clamped_back_x'] as num).toDouble()
+          : origX;
+      final clampedBackY = bestDetection['clamped_back_y'] != null
+          ? (bestDetection['clamped_back_y'] as num).toDouble()
+          : origY;
+      final wasClamped = bestDetection['was_clamped'] as bool? ?? false;
+
       final obs = LEDObservation(
         ledIndex: ledIndex,
         cameraIndex: cameraIndex,
-        pixelX: (bestDetection['x'] as num).toDouble(),
-        pixelY: (bestDetection['y'] as num).toDouble(),
+        pixelX: origX,
+        pixelY: origY,
+        clampedFrontX: clampedFrontX,
+        clampedFrontY: clampedFrontY,
+        clampedBackX: clampedBackX,
+        clampedBackY: clampedBackY,
+        wasClamped: wasClamped,
         detectionConfidence: (bestDetection['detection_confidence'] as num).toDouble(),
         angularConfidence: (bestDetection['angular_confidence'] as num).toDouble(),
       );
@@ -242,9 +279,17 @@ class TriangulationService {
     
     // Get camera position
     final cam = cameraPositions.firstWhere((c) => c.index == bestObs.cameraIndex);
-    
-    // Get ray direction in camera space
-    final rayCamera = cameraGeometry.pixelToRayDirection(bestObs.pixelX, bestObs.pixelY);
+
+    // Get occlusion score to determine which surface (and thus which clamped coords) to use
+    final occlusionScore = occlusion[bestObs.cameraIndex]?[bestObs.ledIndex] ?? 0.5;
+    final useFrontSurface = occlusionScore < 0.5;
+
+    // Use appropriate clamped coordinates based on surface selection
+    final pixelX = useFrontSurface ? bestObs.clampedFrontX : bestObs.clampedBackX;
+    final pixelY = useFrontSurface ? bestObs.clampedFrontY : bestObs.clampedBackY;
+
+    // Get ray direction in camera space using clamped coordinates
+    final rayCamera = cameraGeometry.pixelToRayDirection(pixelX, pixelY);
     
     // Transform to world space
     // Camera coordinate system:
@@ -279,21 +324,19 @@ class TriangulationService {
       return null;
     }
     
-    // Get occlusion score for this camera and LED
-    final occlusionScore = occlusion[bestObs.cameraIndex]?[bestObs.ledIndex] ?? 0.5;
-    
-    // Select surface based on occlusion analysis
+    // Select surface based on occlusion analysis (useFrontSurface already computed above)
     // Low occlusion (< 0.5) = LED facing camera = front surface
     // High occlusion (>= 0.5) = LED facing away = back surface
-    final intersection = occlusionScore < 0.5
+    final intersection = useFrontSurface
         ? dualIntersection.front
         : (dualIntersection.back ?? dualIntersection.front);
-    
+
     // Debug: print surface selection for sample LEDs
     if (ledIndex % 20 == 0) {
       debugPrint('LED $ledIndex: occlusion=${occlusionScore.toStringAsFixed(2)} '
-            'surface=${occlusionScore < 0.5 ? "FRONT" : "BACK"} '
-            'camera=${bestObs.cameraIndex}');
+            'surface=${useFrontSurface ? "FRONT" : "BACK"} '
+            'camera=${bestObs.cameraIndex}'
+            '${bestObs.wasClamped ? " (clamped)" : ""}');
     }
     
     // Use position from selected surface

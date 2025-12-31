@@ -184,21 +184,15 @@ class HomeContent extends StatelessWidget {
             // Process All Button (if detections available)
             if (capture.numDetections > 0) ...[
               ElevatedButton.icon(
-                onPressed: capture.state == CaptureState.processing 
+                onPressed: capture.state == CaptureState.processing
                   ? null
                   : () async {
-                      // Get tree height from user
-                      final height = await showDialog<double>(
-                        context: context,
-                        builder: (context) => _TreeHeightDialog(),
+                      // Use normalized coordinates (treeHeight = 1.0)
+                      // Output will be: height 0-1, angle 0-360°
+                      await capture.processAllDetections(
+                        calibration: Provider.of<CalibrationService>(context, listen: false),
+                        treeHeight: 1.0,
                       );
-                      
-                      if (height != null && context.mounted) {
-                        await capture.processAllDetections(
-                          calibration: Provider.of<CalibrationService>(context, listen: false),
-                          treeHeight: height,
-                        );
-                      }
                     },
                 icon: capture.state == CaptureState.processing
                   ? const SizedBox(
@@ -343,60 +337,3 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-class _TreeHeightDialog extends StatefulWidget {
-  @override
-  State<_TreeHeightDialog> createState() => _TreeHeightDialogState();
-}
-
-class _TreeHeightDialogState extends State<_TreeHeightDialog> {
-  final _controller = TextEditingController(text: '2.0');
-  
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Tree Height'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Enter the height of your tree in meters:'),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Height (meters)',
-              hintText: '2.0',
-              suffixText: 'm',
-              border: OutlineInputBorder(),
-            ),
-            autofocus: true,
-            onSubmitted: (_) => _submit(),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Process'),
-        ),
-      ],
-    );
-  }
-  
-  void _submit() {
-    final height = double.tryParse(_controller.text);
-    if (height != null && height > 0) {
-      Navigator.pop(context, height);
-    }
-  }
-}

@@ -66,60 +66,74 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
           Expanded(
             flex: 3,
             child: camera.isInitialized
-                ? Stack(
-                    children: [
-                      // Camera preview (streaming-based)
-                      StreamingCameraPreview(camera: camera),
-                      
-                      // Cone calibration overlay
-                      if (_showOverlay)
-                        ConeCalibrationOverlay(
-                          previewSize: Size(
-                            MediaQuery.of(context).size.width,
-                            MediaQuery.of(context).size.height * 0.6,
-                          ),
-                          onParametersChanged: (params) {
-                            setState(() => _coneParams = params);
-                          },
-                          settings: settings,
-                        ),
-                      
-                      // Detection results overlay
-                      if (_detectedLEDs.isNotEmpty)
-                        CustomPaint(
-                          size: Size(
-                            MediaQuery.of(context).size.width,
-                            MediaQuery.of(context).size.height * 0.6,
-                          ),
-                          painter: DetectionResultsPainter(
-                            detections: _detectedLEDs,
-                          ),
-                        ),
-                      
-                      // Processing indicator
-                      if (_isProcessing)
-                        Container(
-                          color: Colors.black45,
-                          child: const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircularProgressIndicator(
-                                  color: Colors.white,
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final previewSize = Size(
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                      );
+                      return ClipRect(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Camera preview (streaming-based)
+                            SizedBox.expand(
+                              child: FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width: camera.controller!.value.previewSize?.height ?? constraints.maxWidth,
+                                  height: camera.controller!.value.previewSize?.width ?? constraints.maxHeight,
+                                  child: StreamingCameraPreview(camera: camera),
                                 ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Processing...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
+                              ),
+                            ),
+
+                            // Cone calibration overlay
+                            if (_showOverlay)
+                              ConeCalibrationOverlay(
+                                previewSize: previewSize,
+                                onParametersChanged: (params) {
+                                  setState(() => _coneParams = params);
+                                },
+                                settings: settings,
+                              ),
+
+                            // Detection results overlay
+                            if (_detectedLEDs.isNotEmpty)
+                              CustomPaint(
+                                size: previewSize,
+                                painter: DetectionResultsPainter(
+                                  detections: _detectedLEDs,
+                                ),
+                              ),
+
+                            // Processing indicator
+                            if (_isProcessing)
+                              Container(
+                                color: Colors.black45,
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'Processing...',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                          ],
                         ),
-                    ],
+                      );
+                    },
                   )
                 : const Center(
                     child: Text('Camera not available'),
@@ -405,6 +419,12 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
         throw Exception('Failed to capture frame from camera stream');
       }
 
+      // Scale cone parameters from preview coordinates to camera image coordinates
+      final scaledConeParams = _coneParams?.scaledTo(
+        bgrFrame.originalWidth.toDouble(),
+        bgrFrame.originalHeight.toDouble(),
+      );
+
       // Detect LEDs with OpenCV (sync version - no isolate overhead)
       final detections = LEDDetectionService.detectLEDsFromBGRSync(
         bgrBytes: bgrFrame.bytes,
@@ -412,7 +432,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
         height: bgrFrame.height,
         originalWidth: bgrFrame.originalWidth,
         originalHeight: bgrFrame.originalHeight,
-        coneParams: _coneParams,
+        coneParams: scaledConeParams,
         brightnessThreshold: _brightnessThreshold,
         minArea: 5.0,
         maxArea: 100.0,

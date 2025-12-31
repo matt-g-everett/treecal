@@ -34,6 +34,20 @@ class CameraService extends ChangeNotifier {
   BGRFrame? _latestBGRFrame;  // Pre-converted BGR frame (safe from GC)
   Completer<BGRFrame>? _frameCompleter;
 
+  // Reusable buffers to reduce GC pressure
+  Uint8List? _nv21Buffer;
+  int _frameSkipCounter = 0;
+
+  // Ring buffer for BGR output to avoid allocation per frame
+  // Size of 3 is safe: by the time we wrap, oldest consumer is done
+  static const int _bgrRingBufferSize = 3;
+  List<Uint8List>? _bgrRingBuffer;
+  int _bgrRingIndex = 0;
+
+  /// How many frames to skip between conversions when no one is waiting.
+  /// At 30fps camera, skip 1 = convert at 15fps, skip 2 = convert at 10fps
+  static const int _frameSkipWhenIdle = 1;
+
   /// Downscale factor for capture frames (2.0 = half resolution)
   /// Applied immediately after BGR conversion to reduce memory and processing
   static const double captureDownscaleFactor = 2.0;
@@ -162,7 +176,29 @@ class CameraService extends ChangeNotifier {
     _isStreaming = true;
     _latestBGRFrame = null;
 
+    // Log preview size for comparison
+    final previewSize = _controller!.value.previewSize;
+    debugPrint('[CAMERA] Preview size: ${previewSize?.width}x${previewSize?.height}');
+
+    bool loggedStreamSize = false;
     await _controller!.startImageStream((CameraImage image) {
+      // Log stream size once for comparison with preview
+      if (!loggedStreamSize) {
+        debugPrint('[CAMERA] Stream size: ${image.width}x${image.height}');
+        loggedStreamSize = true;
+      }
+
+      // Skip frames when no one is waiting to reduce GC pressure
+      // When someone IS waiting (during capture), process every frame
+      final someoneWaiting = _frameCompleter != null && !_frameCompleter!.isCompleted;
+      if (!someoneWaiting) {
+        _frameSkipCounter++;
+        if (_frameSkipCounter <= _frameSkipWhenIdle) {
+          return; // Skip this frame
+        }
+        _frameSkipCounter = 0;
+      }
+
       // Convert to BGR IMMEDIATELY in the callback before GC can collect the buffer
       // This must be synchronous - no async, no isolate
       try {
@@ -171,7 +207,7 @@ class CameraService extends ChangeNotifier {
           _latestBGRFrame = bgrFrame;
 
           // If someone is waiting for a frame, complete immediately
-          if (_frameCompleter != null && !_frameCompleter!.isCompleted) {
+          if (someoneWaiting) {
             _frameCompleter!.complete(bgrFrame);
             _frameCompleter = null;
           }
@@ -226,8 +262,22 @@ class CameraService extends ChangeNotifier {
           bgrMat = resized;
         }
 
+        // Use ring buffer for BGR output to reduce allocations
+        final bgrSize = bgrMat.cols * bgrMat.rows * 3;
+        if (_bgrRingBuffer == null || _bgrRingBuffer![0].length != bgrSize) {
+          _bgrRingBuffer = List.generate(
+            _bgrRingBufferSize,
+            (_) => Uint8List(bgrSize),
+          );
+          _bgrRingIndex = 0;
+        }
+
+        final bgrBytes = _bgrRingBuffer![_bgrRingIndex];
+        _bgrRingIndex = (_bgrRingIndex + 1) % _bgrRingBufferSize;
+        bgrBytes.setAll(0, bgrMat.data);
+
         final result = BGRFrame(
-          bytes: Uint8List.fromList(bgrMat.data),
+          bytes: bgrBytes,
           width: bgrMat.cols,
           height: bgrMat.rows,
           originalWidth: originalWidth,
@@ -269,8 +319,12 @@ class CameraService extends ChangeNotifier {
     final height = (originalHeight / scale) ~/ 2 * 2;
 
     // Build NV21 format at reduced resolution
+    // Reuse buffer if possible to reduce GC pressure
     final nv21Size = width * height + (width * height ~/ 2);
-    final nv21Bytes = Uint8List(nv21Size);
+    if (_nv21Buffer == null || _nv21Buffer!.length != nv21Size) {
+      _nv21Buffer = Uint8List(nv21Size);
+    }
+    final nv21Bytes = _nv21Buffer!;
 
     // Subsample Y plane (take every Nth pixel)
     int dstOffset = 0;
@@ -323,8 +377,26 @@ class CameraService extends ChangeNotifier {
     final bgrMat = cv.cvtColor(yuvMat, cv.COLOR_YUV2BGR_NV21);
     yuvMat.dispose();
 
+    // Use ring buffer for BGR output to reduce allocations
+    // Ring buffer is safe because consumers finish processing before we wrap around
+    final bgrSize = bgrMat.cols * bgrMat.rows * 3;
+
+    // Initialize ring buffer if needed (or if size changed)
+    if (_bgrRingBuffer == null || _bgrRingBuffer![0].length != bgrSize) {
+      _bgrRingBuffer = List.generate(
+        _bgrRingBufferSize,
+        (_) => Uint8List(bgrSize),
+      );
+      _bgrRingIndex = 0;
+    }
+
+    // Get next buffer from ring and copy data into it
+    final bgrBytes = _bgrRingBuffer![_bgrRingIndex];
+    _bgrRingIndex = (_bgrRingIndex + 1) % _bgrRingBufferSize;
+    bgrBytes.setAll(0, bgrMat.data);
+
     final result = BGRFrame(
-      bytes: Uint8List.fromList(bgrMat.data),
+      bytes: bgrBytes,
       width: bgrMat.cols,
       height: bgrMat.rows,
       originalWidth: originalWidth,
@@ -387,14 +459,16 @@ class CameraService extends ChangeNotifier {
 
     if (bgrFrame == null) {
       // Wait for a frame if we don't have one
+      // Use short timeout (500ms) - caller can retry if needed
       _frameCompleter = Completer<BGRFrame>();
       try {
         bgrFrame = await _frameCompleter!.future.timeout(
-          const Duration(seconds: 2),
+          const Duration(milliseconds: 500),
           onTimeout: () => throw Exception('Timeout waiting for camera frame'),
         );
       } catch (e) {
         debugPrint('[CAMERA] Error waiting for frame: $e');
+        _frameCompleter = null;  // Clean up for retry
         return null;
       }
     }

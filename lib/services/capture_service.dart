@@ -129,9 +129,12 @@ class CaptureService extends ChangeNotifier {
       _updateStatus('Locking camera focus...');
       await camera.lockForCapture();
 
-      // Start image stream for fast frame capture
-      _updateStatus('Starting camera stream...');
-      await camera.startStreamCapture();
+      // Ensure stream is running (StreamingCameraPreview should have started it,
+      // but we check just in case)
+      if (!camera.isStreaming) {
+        _updateStatus('Starting camera stream...');
+        await camera.startStreamCapture();
+      }
 
       // === Capture each LED with detection ===
       for (int i = 0; i < totalLEDs; i++) {
@@ -162,8 +165,16 @@ class CaptureService extends ChangeNotifier {
 
         // Capture frame from stream as BGR (no JPEG encoding/file I/O)
         // Use waitForFresh to ensure we get a frame captured AFTER the LED turned on
+        // Retry up to 3 times if frame capture fails (can happen under GC pressure)
         sw.start();
-        final bgrFrame = await camera.captureFrameAsBGR(waitForFresh: true);
+        BGRFrame? bgrFrame;
+        for (int attempt = 0; attempt < 3 && bgrFrame == null; attempt++) {
+          if (attempt > 0) {
+            debugPrint('[CAPTURE] Retry $attempt for LED $i');
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+          bgrFrame = await camera.captureFrameAsBGR(waitForFresh: attempt == 0);
+        }
         final captureTime = sw.elapsedMilliseconds;
         sw.reset();
 
@@ -233,7 +244,8 @@ class CaptureService extends ChangeNotifier {
       
       // Clean up
       await mqtt.turnOffAllLEDs();
-      await camera.stopStreamCapture();
+      // DON'T stop the stream - StreamingCameraPreview owns the stream lifecycle
+      // and will keep using it for the preview display
       await camera.unlockCapture();
       
       // Save detections for this position

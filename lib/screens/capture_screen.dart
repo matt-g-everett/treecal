@@ -19,6 +19,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   ConeParameters? _coneParams;
   bool _lightsInitialized = false;
   MqttService? _mqtt;
+  Size? _streamSize;
 
   @override
   void didChangeDependencies() {
@@ -76,10 +77,18 @@ class _CaptureScreenState extends State<CaptureScreen> {
                         constraints.maxWidth,
                         constraints.maxHeight,
                       );
+
                       return Stack(
                         fit: StackFit.expand,
                         children: [
-                          StreamingCameraPreview(camera: camera),
+                          StreamingCameraPreview(
+                            camera: camera,
+                            onStreamSizeChanged: (size) {
+                              setState(() => _streamSize = size);
+                            },
+                            // Pause preview polling during capture to avoid contention
+                            pausePreview: capture.state == CaptureState.capturing,
+                          ),
                           // Show overlay with controls when idle, just outline during capture
                           if (capture.state == CaptureState.idle)
                             ConeCalibrationOverlay(
@@ -98,6 +107,30 @@ class _CaptureScreenState extends State<CaptureScreen> {
                               settings: settings,
                               showControls: false,
                             ),
+                          // Stream size indicator during calibration
+                          if (capture.state == CaptureState.idle && _streamSize != null)
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Stream: ${_streamSize!.width.toInt()}x${_streamSize!.height.toInt()}',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 10,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       );
                     },
@@ -106,7 +139,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     child: Text('Camera not available'),
                   ),
           ),
-          
+
           // Controls
           Expanded(
             flex: 2,
@@ -156,7 +189,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Progress
                   if (capture.state != CaptureState.idle) ...[
                     LinearProgressIndicator(
@@ -170,16 +203,16 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     ),
                     const SizedBox(height: 4),
                   ],
-                  
+
                   // Status
                   Text(
                     capture.statusMessage,
                     style: const TextStyle(fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // Action Buttons
                   if (capture.state == CaptureState.idle)
                     ElevatedButton.icon(
@@ -302,9 +335,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
                         ),
                       ],
                     ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Stop button during capture
                   if (capture.state == CaptureState.capturing)
                     TextButton.icon(

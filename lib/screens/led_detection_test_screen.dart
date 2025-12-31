@@ -20,6 +20,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
   bool _isProcessing = false;
   int _testLEDIndex = -1;  // Initialized from settings in didChangeDependencies
   bool _showOverlay = true;
+  Size? _streamSize;
 
   // Detection parameters
   int _brightnessThreshold = 150;
@@ -41,7 +42,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
     final mqtt = Provider.of<MqttService>(context);
     final camera = Provider.of<CameraService>(context);
     final settings = Provider.of<SettingsService>(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('LED Detection Test'),
@@ -76,15 +77,13 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            // Camera preview (streaming-based)
-                            SizedBox.expand(
-                              child: FittedBox(
-                                fit: BoxFit.cover,
-                                child: SizedBox(
-                                  width: camera.controller!.value.previewSize?.height ?? constraints.maxWidth,
-                                  height: camera.controller!.value.previewSize?.width ?? constraints.maxHeight,
-                                  child: StreamingCameraPreview(camera: camera),
-                                ),
+                            // Camera preview (always uses stream for accurate calibration)
+                            Positioned.fill(
+                              child: StreamingCameraPreview(
+                                camera: camera,
+                                onStreamSizeChanged: (size) {
+                                  setState(() => _streamSize = size);
+                                },
                               ),
                             ),
 
@@ -104,6 +103,31 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                                 size: previewSize,
                                 painter: DetectionResultsPainter(
                                   detections: _detectedLEDs,
+                                ),
+                              ),
+
+                            // Stream size indicator
+                            if (_showOverlay && _streamSize != null)
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Stream: ${_streamSize!.width.toInt()}x${_streamSize!.height.toInt()}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 10,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
                                 ),
                               ),
 
@@ -139,7 +163,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                     child: Text('Camera not available'),
                   ),
           ),
-          
+
           // Controls
           Expanded(
             flex: 2,
@@ -149,7 +173,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       ),
     );
   }
-  
+
   Widget _buildControls(MqttService mqtt, CameraService camera, SettingsService settings) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -165,7 +189,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.white),
               ),
               const SizedBox(width: 16),
-              
+
               // Decrement
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline),
@@ -174,7 +198,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                     : null,
                 color: Colors.white,
               ),
-              
+
               // LED number
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -194,7 +218,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                   ),
                 ),
               ),
-              
+
               // Increment
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
@@ -205,9 +229,9 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Test button
           ElevatedButton.icon(
             onPressed: _isProcessing || !mqtt.isConnected || !camera.isInitialized
@@ -226,9 +250,9 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
               backgroundColor: Colors.blue,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Connection status
           if (!mqtt.isConnected)
             const Text(
@@ -240,9 +264,9 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
               '⚠️ Camera not ready',
               style: TextStyle(color: Colors.orange),
             ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Results
           if (_detectedLEDs.isNotEmpty)
             Expanded(
@@ -265,12 +289,12 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       ),
     );
   }
-  
+
   Widget _buildResults() {
     // Sort by detection confidence (best first)
     final sortedDetections = List<DetectedLED>.from(_detectedLEDs)
       ..sort((a, b) => b.detectionConfidence.compareTo(a.detectionConfidence));
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -289,10 +313,10 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
             itemBuilder: (context, i) {
               final led = sortedDetections[i];
               final isGoodDetection = led.detectionConfidence > 0.7;
-              
+
               return Card(
-                color: isGoodDetection 
-                    ? Colors.green.shade900 
+                color: isGoodDetection
+                    ? Colors.green.shade900
                     : led.detectionConfidence > 0.4
                         ? Colors.orange.shade900
                         : Colors.red.shade900,
@@ -304,11 +328,11 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                       Row(
                         children: [
                           Icon(
-                            isGoodDetection 
-                                ? Icons.check_circle 
+                            isGoodDetection
+                                ? Icons.check_circle
                                 : Icons.warning,
-                            color: isGoodDetection 
-                                ? Colors.green 
+                            color: isGoodDetection
+                                ? Colors.green
                                 : Colors.orange,
                             size: 20,
                           ),
@@ -357,7 +381,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       ],
     );
   }
-  
+
   Widget _buildResultRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -383,21 +407,21 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       ),
     );
   }
-  
+
   Future<void> _testLED(MqttService mqtt, CameraService camera) async {
     setState(() {
       _isProcessing = true;
       _detectedLEDs = [];
     });
 
+    // Stream is already running from preview
     try {
       // Turn off all LEDs first
       await mqtt.turnOffAllLEDs();
       await Future.delayed(const Duration(milliseconds: 200));
 
-      // Lock camera and start streaming (same approach as capture_service)
+      // Lock camera for consistent exposure
       await camera.lockForCapture();
-      await camera.startStreamCapture();
 
       // Turn on test LED
       await mqtt.setLED(_testLEDIndex, true);
@@ -411,8 +435,6 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       // Turn off test LED
       await mqtt.setLED(_testLEDIndex, false);
 
-      // Stop streaming and unlock camera
-      await camera.stopStreamCapture();
       await camera.unlockCapture();
 
       if (bgrFrame == null) {
@@ -465,7 +487,6 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
     } catch (e) {
       // Clean up on error
       try {
-        await camera.stopStreamCapture();
         await camera.unlockCapture();
       } catch (_) {}
 
@@ -481,7 +502,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       );
     }
   }
-  
+
   void _showSettingsDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -524,7 +545,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                 'Typical phone: 60-70°',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              
+
               const SizedBox(height: 16),
               const Text(
                 'Minimum Angular Confidence',
@@ -558,7 +579,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                 'Floor for edge detections',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              
+
               const SizedBox(height: 16),
               const Text(
                 'Brightness Threshold',
@@ -592,11 +613,11 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
                 'Min brightness to detect (0-255)',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              
+
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 8),
-              
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -628,7 +649,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
 /// Custom painter for detection results overlay
 class DetectionResultsPainter extends CustomPainter {
   final List<DetectedLED> detections;
-  
+
   DetectionResultsPainter({
     required this.detections,
   });
@@ -642,25 +663,25 @@ class DetectionResultsPainter extends CustomPainter {
           : led.detectionConfidence > 0.4
               ? Colors.orange
               : Colors.red;
-      
+
       final paint = Paint()
         ..color = color.withValues(alpha: 0.8)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3;
-      
+
       // Draw circle around detection
       canvas.drawCircle(
         Offset(led.x, led.y),
         25,
         paint,
       );
-      
+
       // Draw crosshair
       final crosshairPaint = Paint()
         ..color = color
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
-      
+
       canvas.drawLine(
         Offset(led.x - 15, led.y),
         Offset(led.x + 15, led.y),
@@ -671,7 +692,7 @@ class DetectionResultsPainter extends CustomPainter {
         Offset(led.x, led.y + 15),
         crosshairPaint,
       );
-      
+
       // Draw confidence percentage
       final textPainter = TextPainter(
         text: TextSpan(

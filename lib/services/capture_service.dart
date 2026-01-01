@@ -192,6 +192,7 @@ class CaptureService extends ChangeNotifier {
             );
 
             // Use sync version to avoid isolate spawn overhead (~200ms savings)
+            // maxArea=5000 to catch bloomed LEDs (bright LEDs can bloom to 1000-2000+ px)
             final detections = LEDDetectionService.detectLEDsFromBGRSync(
               bgrBytes: bgrFrame.bytes,
               width: bgrFrame.width,
@@ -199,6 +200,7 @@ class CaptureService extends ChangeNotifier {
               originalWidth: bgrFrame.originalWidth,
               originalHeight: bgrFrame.originalHeight,
               coneParams: scaledConeParams,
+              maxArea: 5000.0,
             );
             detectTime = sw.elapsedMilliseconds;
             sw.reset();

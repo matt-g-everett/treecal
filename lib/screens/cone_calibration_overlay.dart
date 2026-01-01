@@ -74,6 +74,104 @@ class ConeParameters {
     );
   }
 
+  /// Scale and rotate cone parameters for camera image coordinates.
+  /// Handles the rotation between portrait preview and landscape camera sensor.
+  ///
+  /// [sensorOrientation]: Camera sensor rotation in degrees (0, 90, 180, 270)
+  /// [targetWidth], [targetHeight]: Camera image dimensions (pre-rotation)
+  ConeParameters scaledToWithRotation(
+    double targetWidth,
+    double targetHeight,
+    int sensorOrientation,
+  ) {
+    if (sourceWidth <= 0 || sourceHeight <= 0) {
+      return this;
+    }
+
+    // For 90° rotation: preview Y → camera X, preview X → camera (height - Y)
+    // The cone apex (top of preview) maps to the right side of the landscape image
+    // The cone base (bottom of preview) maps to the left side
+    //
+    // Preview coordinate system (portrait):
+    //   - Origin at top-left
+    //   - Y increases downward (apex at small Y, base at large Y)
+    //   - X increases rightward
+    //
+    // Camera coordinate system (landscape, 90° sensor):
+    //   - Origin at top-left of landscape image
+    //   - What appears at top of preview is at RIGHT of camera image
+    //   - Camera X = preview Y scaled
+    //   - Camera Y = (sourceWidth - preview X) scaled
+
+    switch (sensorOrientation) {
+      case 90:
+        // Preview is portrait, camera is landscape rotated 90° clockwise
+        // Preview Y (vertical) → Camera X (horizontal)
+        // Preview X (horizontal) → Camera Y (vertical, inverted)
+        //
+        // When phone is portrait and sensor is 90°:
+        // - Top of preview = right edge of raw camera image
+        // - Bottom of preview = left edge of raw camera image
+        //
+        // So: preview Y=0 (top) → camera X = targetWidth (right edge)
+        //     preview Y=sourceHeight (bottom) → camera X = 0 (left edge)
+        //
+        // Camera X = targetWidth - (preview_Y / sourceHeight * targetWidth)
+        //          = targetWidth * (1 - preview_Y / sourceHeight)
+
+        final apexX = targetWidth - (apexY / sourceHeight * targetWidth);
+        final baseX = targetWidth - (baseY / sourceHeight * targetWidth);
+
+        // Tree height in camera coordinates (horizontal span)
+        final treeWidthInCamera = (baseX - apexX).abs();
+
+        // Base width in preview (horizontal) becomes base height in camera (vertical)
+        final baseHeightInCamera = baseWidth / sourceWidth * targetHeight;
+
+        return ConeParameters(
+          apexY: apexX,  // Note: naming is confusing but we're reusing the structure
+          baseY: baseX,  // apexY now means "apex X in camera coords"
+          baseWidth: treeWidthInCamera,  // The "width" of tree in camera = horizontal span
+          baseHeight: baseHeightInCamera,
+          sourceWidth: targetWidth,
+          sourceHeight: targetHeight,
+        );
+
+      case 270:
+        // Opposite rotation
+        final apexX270 = apexY / sourceHeight * targetWidth;
+        final baseX270 = baseY / sourceHeight * targetWidth;
+        final treeWidthInCamera270 = (baseX270 - apexX270).abs();
+        final baseHeightInCamera270 = baseWidth / sourceWidth * targetHeight;
+
+        return ConeParameters(
+          apexY: apexX270,
+          baseY: baseX270,
+          baseWidth: treeWidthInCamera270,
+          baseHeight: baseHeightInCamera270,
+          sourceWidth: targetWidth,
+          sourceHeight: targetHeight,
+        );
+
+      case 180:
+        // Upside down - just invert Y
+        final scaleX = targetWidth / sourceWidth;
+        final scaleY = targetHeight / sourceHeight;
+        return ConeParameters(
+          apexY: targetHeight - (apexY * scaleY),
+          baseY: targetHeight - (baseY * scaleY),
+          baseWidth: baseWidth * scaleX,
+          baseHeight: baseHeight * scaleY,
+          sourceWidth: targetWidth,
+          sourceHeight: targetHeight,
+        );
+
+      default:
+        // 0° - no rotation, just scale
+        return scaledTo(targetWidth, targetHeight);
+    }
+  }
+
   Map<String, dynamic> toJson() => {
     'apex_y_pixels': apexY,
     'base_y_pixels': baseY,
@@ -87,10 +185,10 @@ class ConeParameters {
 }
 
 class _ConeCalibrationOverlayState extends State<ConeCalibrationOverlay> {
-  // Fixed positions
+  // Fixed positions - user moves phone to align tree with these
   late double _apexY;
   late double _baseY;
-  
+
   // Adjustable dimensions
   late double _baseWidth;   // Horizontal swipe
   late double _baseHeight;  // Vertical swipe (perspective correction)

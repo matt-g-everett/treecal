@@ -9,7 +9,14 @@ import '../services/camera_service.dart';
 /// which is critical for accurate cone calibration on multi-lens devices.
 class StreamingCameraPreview extends StatefulWidget {
   final CameraService camera;
+
+  /// Called when stream size changes. Reports the rotated dimensions
+  /// (what appears on screen, e.g., 720x1280 for portrait).
   final void Function(Size streamSize)? onStreamSizeChanged;
+
+  /// Called when raw camera size is available. Reports the original camera
+  /// dimensions before rotation (e.g., 1280x720 for landscape sensor).
+  final void Function(Size rawCameraSize)? onRawCameraSizeChanged;
 
   /// When true, pauses frame polling to reduce contention during capture.
   /// The last displayed frame will remain visible.
@@ -19,6 +26,7 @@ class StreamingCameraPreview extends StatefulWidget {
     super.key,
     required this.camera,
     this.onStreamSizeChanged,
+    this.onRawCameraSizeChanged,
     this.pausePreview = false,
   });
 
@@ -30,6 +38,7 @@ class _StreamingCameraPreviewState extends State<StreamingCameraPreview> {
   ui.Image? _currentImage;
   bool _isStreaming = false;
   Size? _streamSize;
+  Size? _rawCameraSize;  // Original camera dimensions before rotation
   int _sensorOrientation = 0;  // Degrees to rotate the image
 
   // Reusable RGBA buffer to reduce GC pressure
@@ -80,10 +89,21 @@ class _StreamingCameraPreviewState extends State<StreamingCameraPreview> {
       try {
         final bgrFrame = await widget.camera.captureFrameAsBGR();
         if (bgrFrame != null && mounted) {
-          // Report stream size if changed
-          final newSize = Size(
+          // Report raw camera size (before rotation) for coordinate transformation
+          final newRawSize = Size(
             bgrFrame.originalWidth.toDouble(),
             bgrFrame.originalHeight.toDouble(),
+          );
+          if (_rawCameraSize != newRawSize) {
+            _rawCameraSize = newRawSize;
+            widget.onRawCameraSizeChanged?.call(newRawSize);
+          }
+
+          // Report stream size if changed (use rotated dimensions for portrait display)
+          final bool isRotated90or270 = _sensorOrientation == 90 || _sensorOrientation == 270;
+          final newSize = Size(
+            isRotated90or270 ? bgrFrame.originalHeight.toDouble() : bgrFrame.originalWidth.toDouble(),
+            isRotated90or270 ? bgrFrame.originalWidth.toDouble() : bgrFrame.originalHeight.toDouble(),
           );
           if (_streamSize != newSize) {
             _streamSize = newSize;

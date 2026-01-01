@@ -4,8 +4,10 @@ import '../services/mqtt_service.dart';
 import '../services/camera_service.dart';
 import '../services/led_detection_service.dart';
 import '../services/settings_service.dart';
-import '../widgets/streaming_camera_preview.dart';
+import '../widgets/camera_preview_with_cone.dart';
 import 'cone_calibration_overlay.dart';
+
+export 'cone_calibration_overlay.dart' show ConeParameters;
 
 class LEDDetectionTestScreen extends StatefulWidget {
   const LEDDetectionTestScreen({super.key});
@@ -24,7 +26,6 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
   bool _showOverlay = true;
   bool _showContours = true;  // Show raw OpenCV contours
   Size? _streamSize;         // Rotated dimensions for display (e.g., 720x1280)
-  Size? _rawCameraSize;      // Original camera dimensions (e.g., 1280x720)
   bool _keepLedLit = true;  // Keep LED on for easier debugging
   bool _ledIsLit = false;   // Track if LED is currently lit
   int _sensorOrientation = 0;  // Camera sensor rotation (0, 90, 180, 270)
@@ -42,11 +43,7 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
       final settings = Provider.of<SettingsService>(context, listen: false);
       _testLEDIndex = settings.totalLeds - 1;
     }
-    // Get sensor orientation from camera
-    final camera = Provider.of<CameraService>(context, listen: false);
-    if (camera.isInitialized && camera.controller != null) {
-      _sensorOrientation = camera.controller!.description.sensorOrientation;
-    }
+    // Sensor orientation is now handled by CameraPreviewWithCone via callback
   }
 
   /// Change the LED index, switching the lit LED if keepLedLit is enabled
@@ -101,125 +98,52 @@ class _LEDDetectionTestScreenState extends State<LEDDetectionTestScreen> {
           Expanded(
             flex: 3,
             child: camera.isInitialized
-                ? LayoutBuilder(
-                    builder: (context, constraints) {
-                      final widgetSize = Size(constraints.maxWidth, constraints.maxHeight);
-                      return ClipRect(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Camera preview (always uses stream for accurate calibration)
-                            Positioned.fill(
-                              child: StreamingCameraPreview(
-                                camera: camera,
-                                onStreamSizeChanged: (size) {
-                                  setState(() => _streamSize = size);
-                                },
-                                onRawCameraSizeChanged: (size) {
-                                  setState(() => _rawCameraSize = size);
-                                },
-                              ),
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Camera preview with cone overlay and detection results
+                      CameraPreviewWithCone(
+                        camera: camera,
+                        settings: settings,
+                        showConeOverlay: _showOverlay,
+                        coneControlsEnabled: false,
+                        showSizeIndicator: _showOverlay,
+                        detections: _detectedLEDs,
+                        onConeParametersChanged: (params) {
+                          setState(() => _coneParams = params);
+                        },
+                        onStreamSizeChanged: (size) {
+                          setState(() => _streamSize = size);
+                        },
+                        onSensorOrientationChanged: (orientation) {
+                          setState(() => _sensorOrientation = orientation);
+                        },
+                      ),
+
+                      // Processing indicator
+                      if (_isProcessing)
+                        Container(
+                          color: Colors.black45,
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Processing...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
                             ),
-
-                            // Cone calibration overlay
-                            // Uses widget size for drawing, stream size for coordinate mapping
-                            if (_showOverlay)
-                              Positioned.fill(
-                                child: ConeCalibrationOverlay(
-                                  previewSize: widgetSize,
-                                  onParametersChanged: (params) {
-                                    setState(() => _coneParams = params);
-                                  },
-                                  settings: settings,
-                                  showControls: false,
-                                ),
-                              ),
-
-                            // Contour overlay (all OpenCV contours for debugging)
-                            // Painters handle coordinate transformation from camera to widget space
-                            // imageSize is raw camera dimensions (before rotation)
-                            if (_showContours && _allContours.isNotEmpty && _rawCameraSize != null)
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  size: widgetSize,
-                                  painter: ContourOverlayPainter(
-                                    allContours: _allContours,
-                                    passedContours: _passedContours,
-                                    imageSize: _rawCameraSize!,
-                                    canvasSize: widgetSize,
-                                    sensorOrientation: _sensorOrientation,
-                                  ),
-                                ),
-                              ),
-
-                            // Detection results overlay
-                            // Painters handle coordinate transformation from camera to widget space
-                            // imageSize is raw camera dimensions (before rotation)
-                            if (_detectedLEDs.isNotEmpty && _rawCameraSize != null)
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  size: widgetSize,
-                                  painter: DetectionResultsPainter(
-                                    detections: _detectedLEDs,
-                                    imageSize: _rawCameraSize!,
-                                    canvasSize: widgetSize,
-                                    sensorOrientation: _sensorOrientation,
-                                  ),
-                                ),
-                              ),
-
-                            // Stream size indicator
-                            if (_showOverlay && _streamSize != null)
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'Stream: ${_streamSize!.width.toInt()}x${_streamSize!.height.toInt()} Widget: ${widgetSize.width.toInt()}x${widgetSize.height.toInt()}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 10,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            // Processing indicator
-                            if (_isProcessing)
-                              Container(
-                                color: Colors.black45,
-                                child: const Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      CircularProgressIndicator(
-                                        color: Colors.white,
-                                      ),
-                                      SizedBox(height: 16),
-                                      Text(
-                                        'Processing...',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
+                          ),
                         ),
-                      );
-                    },
+                    ],
                   )
                 : const Center(
                     child: Text('Camera not available'),

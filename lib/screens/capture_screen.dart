@@ -5,9 +5,8 @@ import '../services/camera_service.dart';
 import '../services/capture_service.dart';
 import '../services/led_detection_service.dart';
 import '../services/settings_service.dart';
-import '../widgets/streaming_camera_preview.dart';
-import 'cone_calibration_overlay.dart';
-import 'led_detection_test_screen.dart';  // For DetectionResultsPainter and ContourOverlayPainter
+import '../widgets/camera_preview_with_cone.dart';
+import 'led_detection_test_screen.dart';  // For DetectionResultsPainter, ContourOverlayPainter, ConeParameters
 
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
@@ -21,8 +20,6 @@ class _CaptureScreenState extends State<CaptureScreen> {
   ConeParameters? _coneParams;
   bool _lightsInitialized = false;
   MqttService? _mqtt;
-  Size? _streamSize;
-  Size? _rawCameraSize;           // Original camera dimensions (e.g., 1280x720)
   int _sensorOrientation = 0;     // Camera sensor rotation (0, 90, 180, 270)
   bool _showOverlay = true;       // Show cone overlay
   bool _showContours = true;      // Show raw OpenCV contours
@@ -38,11 +35,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     // Save reference to MQTT service for use in dispose()
     _mqtt = Provider.of<MqttService>(context, listen: false);
 
-    // Get sensor orientation from camera
-    final camera = Provider.of<CameraService>(context, listen: false);
-    if (camera.isInitialized && camera.controller != null) {
-      _sensorOrientation = camera.controller!.description.sensorOrientation;
-    }
+    // Sensor orientation is now handled by CameraPreviewWithCone via callback
 
     // Turn on dim white LEDs to help user align the cone overlay
     if (!_lightsInitialized) {
@@ -104,111 +97,22 @@ class _CaptureScreenState extends State<CaptureScreen> {
           Expanded(
             flex: 3,
             child: camera.isInitialized
-                ? LayoutBuilder(
-                    builder: (context, constraints) {
-                      final widgetSize = Size(
-                        constraints.maxWidth,
-                        constraints.maxHeight,
-                      );
-
-                      return ClipRect(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Camera preview
-                            Positioned.fill(
-                              child: StreamingCameraPreview(
-                                camera: camera,
-                                onStreamSizeChanged: (size) {
-                                  setState(() => _streamSize = size);
-                                },
-                                onRawCameraSizeChanged: (size) {
-                                  setState(() => _rawCameraSize = size);
-                                },
-                                // Pause preview polling during capture to avoid contention
-                                pausePreview: capture.state == CaptureState.capturing,
-                              ),
-                            ),
-
-                            // Cone calibration overlay
-                            if (_showOverlay && capture.state == CaptureState.idle)
-                              Positioned.fill(
-                                child: ConeCalibrationOverlay(
-                                  previewSize: widgetSize,
-                                  onParametersChanged: (params) {
-                                    _coneParams = params;
-                                  },
-                                  settings: settings,
-                                  showControls: true,
-                                ),
-                              )
-                            else if (_showOverlay && (capture.state == CaptureState.capturing ||
-                                     capture.state == CaptureState.paused))
-                              Positioned.fill(
-                                child: ConeCalibrationOverlay(
-                                  previewSize: widgetSize,
-                                  onParametersChanged: (params) {},
-                                  settings: settings,
-                                  showControls: false,
-                                ),
-                              ),
-
-                            // Contour overlay (all OpenCV contours for debugging)
-                            if (_showContours && _allContours.isNotEmpty && _rawCameraSize != null)
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  size: widgetSize,
-                                  painter: ContourOverlayPainter(
-                                    allContours: _allContours,
-                                    passedContours: _passedContours,
-                                    imageSize: _rawCameraSize!,
-                                    canvasSize: widgetSize,
-                                    sensorOrientation: _sensorOrientation,
-                                  ),
-                                ),
-                              ),
-
-                            // Detection results overlay
-                            if (_currentDetections.isNotEmpty && _rawCameraSize != null)
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  size: widgetSize,
-                                  painter: DetectionResultsPainter(
-                                    detections: _currentDetections,
-                                    imageSize: _rawCameraSize!,
-                                    canvasSize: widgetSize,
-                                    sensorOrientation: _sensorOrientation,
-                                  ),
-                                ),
-                              ),
-
-                            // Stream size indicator
-                            if (_showOverlay && _streamSize != null)
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'Stream: ${_streamSize!.width.toInt()}x${_streamSize!.height.toInt()} Widget: ${widgetSize.width.toInt()}x${widgetSize.height.toInt()}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 10,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
+                ? CameraPreviewWithCone(
+                    camera: camera,
+                    settings: settings,
+                    showConeOverlay: _showOverlay,
+                    coneControlsEnabled: _showOverlay && capture.state == CaptureState.idle,
+                    showSizeIndicator: _showOverlay,
+                    pausePreview: capture.state == CaptureState.capturing,
+                    detections: _currentDetections,
+                    showContours: _showContours,
+                    allContours: _allContours,
+                    passedContours: _passedContours,
+                    onConeParametersChanged: (params) {
+                      _coneParams = params;
+                    },
+                    onSensorOrientationChanged: (orientation) {
+                      setState(() => _sensorOrientation = orientation);
                     },
                   )
                 : const Center(

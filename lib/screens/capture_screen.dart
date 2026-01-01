@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import '../services/mqtt_service.dart';
 import '../services/camera_service.dart';
 import '../services/capture_service.dart';
+import '../services/led_detection_service.dart';
 import '../services/settings_service.dart';
 import '../widgets/streaming_camera_preview.dart';
 import 'cone_calibration_overlay.dart';
+import 'led_detection_test_screen.dart';  // For DetectionResultsPainter and ContourOverlayPainter
 
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
@@ -20,12 +22,27 @@ class _CaptureScreenState extends State<CaptureScreen> {
   bool _lightsInitialized = false;
   MqttService? _mqtt;
   Size? _streamSize;
+  Size? _rawCameraSize;           // Original camera dimensions (e.g., 1280x720)
+  int _sensorOrientation = 0;     // Camera sensor rotation (0, 90, 180, 270)
+  bool _showOverlay = true;       // Show cone overlay
+  bool _showContours = true;      // Show raw OpenCV contours
+
+  // Current detection results (updated during capture)
+  List<DetectedLED> _currentDetections = [];
+  List<ContourPolygon> _allContours = [];
+  List<ContourPolygon> _passedContours = [];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Save reference to MQTT service for use in dispose()
     _mqtt = Provider.of<MqttService>(context, listen: false);
+
+    // Get sensor orientation from camera
+    final camera = Provider.of<CameraService>(context, listen: false);
+    if (camera.isInitialized && camera.controller != null) {
+      _sensorOrientation = camera.controller!.description.sensorOrientation;
+    }
 
     // Turn on dim white LEDs to help user align the cone overlay
     if (!_lightsInitialized) {
@@ -64,6 +81,22 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Capture LEDs'),
+        actions: [
+          IconButton(
+            icon: Icon(_showOverlay ? Icons.visibility : Icons.visibility_off),
+            onPressed: () {
+              setState(() => _showOverlay = !_showOverlay);
+            },
+            tooltip: _showOverlay ? 'Hide overlay' : 'Show overlay',
+          ),
+          IconButton(
+            icon: Icon(_showContours ? Icons.grid_on : Icons.grid_off),
+            onPressed: () {
+              setState(() => _showContours = !_showContours);
+            },
+            tooltip: _showContours ? 'Hide contours' : 'Show contours',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -73,65 +106,108 @@ class _CaptureScreenState extends State<CaptureScreen> {
             child: camera.isInitialized
                 ? LayoutBuilder(
                     builder: (context, constraints) {
-                      final previewSize = Size(
+                      final widgetSize = Size(
                         constraints.maxWidth,
                         constraints.maxHeight,
                       );
 
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          StreamingCameraPreview(
-                            camera: camera,
-                            onStreamSizeChanged: (size) {
-                              setState(() => _streamSize = size);
-                            },
-                            // Pause preview polling during capture to avoid contention
-                            pausePreview: capture.state == CaptureState.capturing,
-                          ),
-                          // Show overlay with controls when idle, just outline during capture
-                          if (capture.state == CaptureState.idle)
-                            ConeCalibrationOverlay(
-                              previewSize: previewSize,
-                              onParametersChanged: (params) {
-                                _coneParams = params;
-                              },
-                              settings: settings,
-                              showControls: true,
-                            )
-                          else if (capture.state == CaptureState.capturing ||
-                                   capture.state == CaptureState.paused)
-                            ConeCalibrationOverlay(
-                              previewSize: previewSize,
-                              onParametersChanged: (params) {},
-                              settings: settings,
-                              showControls: false,
+                      return ClipRect(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Camera preview
+                            Positioned.fill(
+                              child: StreamingCameraPreview(
+                                camera: camera,
+                                onStreamSizeChanged: (size) {
+                                  setState(() => _streamSize = size);
+                                },
+                                onRawCameraSizeChanged: (size) {
+                                  setState(() => _rawCameraSize = size);
+                                },
+                                // Pause preview polling during capture to avoid contention
+                                pausePreview: capture.state == CaptureState.capturing,
+                              ),
                             ),
-                          // Stream size indicator during calibration
-                          if (capture.state == CaptureState.idle && _streamSize != null)
-                            Positioned(
-                              bottom: 8,
-                              right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+
+                            // Cone calibration overlay
+                            if (_showOverlay && capture.state == CaptureState.idle)
+                              Positioned.fill(
+                                child: ConeCalibrationOverlay(
+                                  previewSize: widgetSize,
+                                  onParametersChanged: (params) {
+                                    _coneParams = params;
+                                  },
+                                  settings: settings,
+                                  showControls: true,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(4),
+                              )
+                            else if (_showOverlay && (capture.state == CaptureState.capturing ||
+                                     capture.state == CaptureState.paused))
+                              Positioned.fill(
+                                child: ConeCalibrationOverlay(
+                                  previewSize: widgetSize,
+                                  onParametersChanged: (params) {},
+                                  settings: settings,
+                                  showControls: false,
                                 ),
-                                child: Text(
-                                  'Stream: ${_streamSize!.width.toInt()}x${_streamSize!.height.toInt()}',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 10,
-                                    fontFamily: 'monospace',
+                              ),
+
+                            // Contour overlay (all OpenCV contours for debugging)
+                            if (_showContours && _allContours.isNotEmpty && _rawCameraSize != null)
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  size: widgetSize,
+                                  painter: ContourOverlayPainter(
+                                    allContours: _allContours,
+                                    passedContours: _passedContours,
+                                    imageSize: _rawCameraSize!,
+                                    canvasSize: widgetSize,
+                                    sensorOrientation: _sensorOrientation,
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
+
+                            // Detection results overlay
+                            if (_currentDetections.isNotEmpty && _rawCameraSize != null)
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  size: widgetSize,
+                                  painter: DetectionResultsPainter(
+                                    detections: _currentDetections,
+                                    imageSize: _rawCameraSize!,
+                                    canvasSize: widgetSize,
+                                    sensorOrientation: _sensorOrientation,
+                                  ),
+                                ),
+                              ),
+
+                            // Stream size indicator
+                            if (_showOverlay && _streamSize != null)
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Stream: ${_streamSize!.width.toInt()}x${_streamSize!.height.toInt()} Widget: ${widgetSize.width.toInt()}x${widgetSize.height.toInt()}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 10,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       );
                     },
                   )
@@ -219,11 +295,26 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       onPressed: () async {
                         // Turn off calibration lights before starting capture
                         await _turnOffCalibrationLights();
+                        // Clear previous detections
+                        setState(() {
+                          _currentDetections = [];
+                          _allContours = [];
+                          _passedContours = [];
+                        });
                         await capture.startCapture(
                           mqtt: mqtt,
                           camera: camera,
                           positionNumber: _positionNumber,
                           coneParams: _coneParams,
+                          sensorOrientation: _sensorOrientation,
+                          onDetectionResult: (result) {
+                            // Update overlay with latest detection results
+                            setState(() {
+                              _currentDetections = result.detections;
+                              _allContours = result.allContours;
+                              _passedContours = result.passedContours;
+                            });
+                          },
                         );
                       },
                       icon: const Icon(Icons.play_arrow, size: 32),

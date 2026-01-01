@@ -99,11 +99,16 @@ class CaptureService extends ChangeNotifier {
   }
   
   /// Start capture for a camera position with real-time detection
+  ///
+  /// [onDetectionResult] is called after each LED detection with the latest results.
+  /// [sensorOrientation] is the camera sensor rotation (0, 90, 180, 270 degrees).
   Future<void> startCapture({
     required MqttService mqtt,
     required CameraService camera,
     required int positionNumber,
     ConeParameters? coneParams,
+    int sensorOrientation = 0,
+    void Function(LEDDetectionResult result)? onDetectionResult,
   }) async {
     if (_state == CaptureState.capturing) return;
     
@@ -185,25 +190,28 @@ class CaptureService extends ChangeNotifier {
             debugPrint('Error capturing frame for LED $i');
           } else {
             sw.start();
-            // Scale cone parameters from preview coordinates to camera image coordinates
-            final scaledConeParams = coneParams?.scaledTo(
-              bgrFrame.originalWidth.toDouble(),
-              bgrFrame.originalHeight.toDouble(),
-            );
-
-            // Use sync version to avoid isolate spawn overhead (~200ms savings)
+            // Use sync version with contours for full debug info
             // maxArea=5000 to catch bloomed LEDs (bright LEDs can bloom to 1000-2000+ px)
-            final detections = LEDDetectionService.detectLEDsFromBGRSync(
+            // Cone params stay in preview coordinates; detection service handles transformation
+            final result = LEDDetectionService.detectLEDsFromBGRSyncWithContours(
               bgrBytes: bgrFrame.bytes,
               width: bgrFrame.width,
               height: bgrFrame.height,
               originalWidth: bgrFrame.originalWidth,
               originalHeight: bgrFrame.originalHeight,
-              coneParams: scaledConeParams,
+              coneParams: coneParams,
               maxArea: 5000.0,
+              expectedLedIndex: i,
+              totalLeds: totalLEDs,
+              sensorOrientation: sensorOrientation,
             );
             detectTime = sw.elapsedMilliseconds;
             sw.reset();
+
+            final detections = result.detections;
+
+            // Notify UI with detection results for overlay display
+            onDetectionResult?.call(result);
 
             // Store detection
             _allDetections.add({

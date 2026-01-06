@@ -1,163 +1,782 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="121 124 340 340"
+   width="340"
+   height="340"
+   version="1.1"
+   id="svg45"
+   sodipodi:docname="treecal-icon.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview45"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="1.1771117"
+     inkscape:cx="155.04051"
+     inkscape:cy="178.82755"
+     inkscape:window-width="1512"
+     inkscape:window-height="824"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg45" />
+  <defs
+     id="defs25">
     <!-- Background gradient -->
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a2540;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#051627;stop-opacity:1" />
+    <linearGradient
+       id="bgGradient"
+       x1="20"
+       y1="20"
+       x2="20"
+       y2="492"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.67782387,0,0,0.8434116,98.193522,100.82853)">
+      <stop
+         offset="0%"
+         style="stop-color:#0a2540;stop-opacity:1"
+         id="stop1" />
+      <stop
+         offset="100%"
+         style="stop-color:#051627;stop-opacity:1"
+         id="stop2" />
     </linearGradient>
-    
     <!-- Line gradients (decimal notation 0-1) -->
-    <linearGradient id="gradient3-4" x1="1" x2="0" y1="0" y2="1">
-      <stop offset="0%" style="stop-color:#7cf4bd;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:1" />
+    <linearGradient
+       id="gradient3-4"
+       x1="270.78889"
+       x2="171.65262"
+       y1="263.63711"
+       y2="362.77338"
+       gradientTransform="scale(1.0894096,0.91792842)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         style="stop-color:#7cf4bd;stop-opacity:1"
+         id="stop3" />
+      <stop
+         offset="100%"
+         style="stop-color:#5ddef4;stop-opacity:1"
+         id="stop4" />
     </linearGradient>
-    
-    <linearGradient id="gradient4-6" x1="1" x2="0" y1="0" y2="1">
-      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#4db8e8;stop-opacity:1" />
+    <linearGradient
+       id="gradient4-6"
+       x1="330.6718"
+       x2="277.55871"
+       y1="190.85692"
+       y2="243.97"
+       gradientTransform="scale(0.5836603,1.7133254)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         style="stop-color:#5ddef4;stop-opacity:1"
+         id="stop5" />
+      <stop
+         offset="100%"
+         style="stop-color:#4db8e8;stop-opacity:1"
+         id="stop6" />
     </linearGradient>
-    
-    <linearGradient id="gradient6-7" x1="0" x2="1" y1="0.5" y2="0.5">
-      <stop offset="0%" style="stop-color:#4db8e8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:1" />
+    <linearGradient
+       id="gradient6-7"
+       x1="42.368089"
+       x2="65.734732"
+       y1="1616.1928"
+       y2="1616.1928"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,-6.7962964,60.31713)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         style="stop-color:#4db8e8;stop-opacity:1"
+         id="stop7" />
+      <stop
+         offset="100%"
+         style="stop-color:#5ddef4;stop-opacity:1"
+         id="stop8" />
     </linearGradient>
-    
-    <linearGradient id="gradient7-8" x1="0" x2="1" y1="0.5" y2="0.5">
-      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7cf4bd;stop-opacity:1" />
+    <linearGradient
+       id="gradient7-8"
+       x1="65.734732"
+       x2="89.101375"
+       y1="1616.1928"
+       y2="1616.1928"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,71.361112,118.93519)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         style="stop-color:#5ddef4;stop-opacity:1"
+         id="stop9" />
+      <stop
+         offset="100%"
+         style="stop-color:#7cf4bd;stop-opacity:1"
+         id="stop10" />
     </linearGradient>
-    
-    <linearGradient id="gradient5-8" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7cf4bd;stop-opacity:1" />
+    <linearGradient
+       id="gradient5-8"
+       x1="546.5508"
+       x2="599.66388"
+       y1="190.85692"
+       y2="243.97"
+       gradientTransform="scale(0.5836603,1.7133254)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         style="stop-color:#5ddef4;stop-opacity:1"
+         id="stop11" />
+      <stop
+         offset="100%"
+         style="stop-color:#7cf4bd;stop-opacity:1"
+         id="stop12" />
     </linearGradient>
-    
     <!-- Glow filters -->
-    <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
+    <filter
+       id="starGlow"
+       x="-0.43636364"
+       y="-0.42666667"
+       width="1.8727273"
+       height="1.8533333">
+      <feGaussianBlur
+         stdDeviation="8"
+         result="coloredBlur"
+         id="feGaussianBlur12" />
+      <feMerge
+         id="feMerge13">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode12" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode13" />
       </feMerge>
     </filter>
-    
-    <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
+    <filter
+       id="nodeGlow"
+       x="-0.45"
+       y="-0.45"
+       width="1.9"
+       height="1.9">
+      <feGaussianBlur
+         stdDeviation="6"
+         result="coloredBlur"
+         id="feGaussianBlur13" />
+      <feMerge
+         id="feMerge15">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode14" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode15" />
       </feMerge>
     </filter>
-    
-    <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
+    <filter
+       id="lineGlow"
+       x="-0.10549451"
+       y="-1.6"
+       width="1.210989"
+       height="4.2">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15" />
+      <feMerge
+         id="feMerge17">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17" />
       </feMerge>
     </filter>
-    
     <!-- Radial gradients for outer glow circles -->
-    <radialGradient id="cyanGlow">
-      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:0" />
+    <radialGradient
+       id="cyanGlow">
+      <stop
+         offset="0%"
+         style="stop-color:#5ddef4;stop-opacity:0.6"
+         id="stop17" />
+      <stop
+         offset="100%"
+         style="stop-color:#5ddef4;stop-opacity:0"
+         id="stop18" />
     </radialGradient>
-    
-    <radialGradient id="greenGlow">
-      <stop offset="0%" style="stop-color:#7cf4bd;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#7cf4bd;stop-opacity:0" />
+    <radialGradient
+       id="greenGlow">
+      <stop
+         offset="0%"
+         style="stop-color:#7cf4bd;stop-opacity:0.6"
+         id="stop19" />
+      <stop
+         offset="100%"
+         style="stop-color:#7cf4bd;stop-opacity:0"
+         id="stop20" />
     </radialGradient>
-    
-    <radialGradient id="blueGlow">
-      <stop offset="0%" style="stop-color:#4db8e8;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#4db8e8;stop-opacity:0" />
+    <radialGradient
+       id="blueGlow"
+       cx="165"
+       cy="400"
+       fx="165"
+       fy="400"
+       r="25"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         style="stop-color:#4db8e8;stop-opacity:0.6"
+         id="stop21" />
+      <stop
+         offset="100%"
+         style="stop-color:#4db8e8;stop-opacity:0"
+         id="stop22" />
     </radialGradient>
-    
-    <radialGradient id="starWhiteGlow">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
-      <stop offset="50%" style="stop-color:#5ddef4;stop-opacity:0.4" />
-      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:0" />
+    <radialGradient
+       id="starWhiteGlow"
+       cx="256"
+       cy="170"
+       fx="256"
+       fy="170"
+       r="35"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(35,10)">
+      <stop
+         offset="0%"
+         style="stop-color:#ffffff;stop-opacity:0.8"
+         id="stop23" />
+      <stop
+         offset="50%"
+         style="stop-color:#5ddef4;stop-opacity:0.4"
+         id="stop24" />
+      <stop
+         offset="100%"
+         style="stop-color:#5ddef4;stop-opacity:0"
+         id="stop25" />
     </radialGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#cyanGlow"
+       id="radialGradient75"
+       cx="190"
+       cy="330"
+       fx="190"
+       fy="330"
+       r="25"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#cyanGlow"
+       id="radialGradient76"
+       cx="256"
+       cy="415"
+       fx="256"
+       fy="415"
+       r="25"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#greenGlow"
+       id="radialGradient77"
+       cx="347"
+       cy="415"
+       fx="347"
+       fy="415"
+       r="25"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#cyanGlow"
+       id="radialGradient78"
+       cx="220"
+       cy="245"
+       fx="220"
+       fy="245"
+       r="25"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#greenGlow"
+       id="radialGradient79"
+       cx="292"
+       cy="245"
+       fx="292"
+       fy="245"
+       r="25"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#cyanGlow"
+       id="radialGradient80"
+       cx="322"
+       cy="330"
+       fx="322"
+       fy="330"
+       r="25"
+       gradientUnits="userSpaceOnUse" />
+    <filter
+       id="lineGlow-3"
+       x="-0.10549451"
+       y="-1.6"
+       width="1.210989"
+       height="4.2">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-7" />
+      <feMerge
+         id="feMerge17-8">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-8" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-3" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient6-7"
+       id="linearGradient80"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,255.17871,212.76434)"
+       x1="42.368089"
+       y1="1616.1928"
+       x2="65.734732"
+       y2="1616.1928" />
+    <filter
+       id="lineGlow-5"
+       x="-0.10549451"
+       y="-1.4976599"
+       width="1.210989"
+       height="3.9953199">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-4" />
+      <feMerge
+         id="feMerge17-1">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-88" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-35" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient7-8"
+       id="linearGradient81"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,95.618518,-84.925455)"
+       x1="65.734732"
+       y1="1616.1928"
+       x2="89.101375"
+       y2="1616.1928" />
+    <filter
+       id="lineGlow-4"
+       x="-0.10549451"
+       y="-1.4976599"
+       width="1.210989"
+       height="3.9953199">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-9" />
+      <feMerge
+         id="feMerge17-15">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-5" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-5" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient6-7"
+       id="linearGradient82"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,58.368523,-58.03427)"
+       x1="42.368089"
+       y1="1616.1928"
+       x2="65.734732"
+       y2="1616.1928" />
+    <filter
+       id="lineGlow-2"
+       x="-0.10549451"
+       y="-2.0915032"
+       width="1.210989"
+       height="5.1830064">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-0" />
+      <feMerge
+         id="feMerge17-7">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-4" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-8" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient7-8"
+       id="linearGradient83"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,-41.476388,-122.1199)"
+       x1="65.734732"
+       y1="1616.1928"
+       x2="89.101375"
+       y2="1616.1928" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient7-8"
+       id="linearGradient83-2"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,-41.476388,-122.1199)"
+       x1="65.734734"
+       y1="1616.1927"
+       x2="89.101372"
+       y2="1616.1927" />
+    <filter
+       id="lineGlow-2-2"
+       x="-0.10549451"
+       y="-1.5141955"
+       width="1.210989"
+       height="4.0283911">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-0-7" />
+      <feMerge
+         id="feMerge17-7-1">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-4-5" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-8-2" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient6-7"
+       id="linearGradient84"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,4.2476852,-13.592593)"
+       x1="42.368089"
+       y1="1616.1928"
+       x2="65.734732"
+       y2="1616.1928" />
+    <filter
+       id="lineGlow-4-7"
+       x="-0.10549451"
+       y="-1.6"
+       width="1.210989"
+       height="4.2">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-9-6" />
+      <feMerge
+         id="feMerge17-15-0">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-5-0" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-5-9" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#gradient7-8"
+       id="linearGradient85"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(3.8944405,0,0,0.2567763,4.2476858,-13.592589)"
+       x1="65.734732"
+       y1="1616.1928"
+       x2="89.101375"
+       y2="1616.1928" />
+    <filter
+       id="lineGlow-43"
+       x="-0.10549451"
+       y="-1.632653"
+       width="1.210989"
+       height="4.2653061">
+      <feGaussianBlur
+         stdDeviation="4"
+         result="coloredBlur"
+         id="feGaussianBlur15-90" />
+      <feMerge
+         id="feMerge17-5">
+        <feMergeNode
+           in="coloredBlur"
+           id="feMergeNode16-6" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode17-36" />
+      </feMerge>
+    </filter>
   </defs>
-  
   <!-- Background rounded rectangle -->
-  <rect x="20" y="20" width="472" height="472" rx="100" ry="100" fill="url(#bgGradient)"/>
-  
+  <rect
+     x="121.23843"
+     y="123.78703"
+     width="340"
+     height="340"
+     rx="40"
+     ry="40"
+     fill="url(#bgGradient)"
+     id="rect25"
+     style="fill:url(#bgGradient);stroke:none;stroke-width:0.756099;paint-order:stroke fill markers" />
   <!-- Define node positions - adjusted to match original more precisely -->
   <!-- Star: 256, 170 -->
   <!-- Row 2: 220, 245 (left) and 292, 245 (right) -->
   <!-- Row 3: 190, 330 (left) and 322, 330 (right) -->
   <!-- Row 4: 165, 415 (left), 256, 415 (center), 347, 415 (right) -->
-  
-  
   <!-- Glow circles behind everything -->
-  <circle cx="256" cy="170" r="35" fill="url(#starWhiteGlow)"/>
-  <circle cx="220" cy="245" r="25" fill="url(#cyanGlow)"/>
-  <circle cx="292" cy="245" r="25" fill="url(#greenGlow)"/>
-  <circle cx="190" cy="330" r="25" fill="url(#cyanGlow)"/>
-  <circle cx="322" cy="330" r="25" fill="url(#cyanGlow)"/>
-  <circle cx="165" cy="415" r="25" fill="url(#blueGlow)"/>
-  <circle cx="256" cy="415" r="25" fill="url(#cyanGlow)"/>
-  <circle cx="347" cy="415" r="25" fill="url(#greenGlow)"/>
-  
+  <circle
+     cx="291"
+     cy="180"
+     r="35"
+     fill="url(#starWhiteGlow)"
+     id="circle25"
+     style="fill:url(#starWhiteGlow)" />
   <!-- Connection lines with glow (except 6-7 and 7-8 which go last) -->
-  <g filter="url(#lineGlow)">
-    <!-- 1-2: Star to row 2 left -->
-    <line x1="256" y1="170" x2="220" y2="245" stroke="#5ddef4" stroke-width="6" stroke-linecap="round"/>
-    <!-- 1-3: Star to row 2 right -->
-    <line x1="256" y1="170" x2="292" y2="245" stroke="#7cf4bd" stroke-width="6" stroke-linecap="round"/>
-    
-    <!-- 3-4: Row 2 right to row 3 left (GRADIENT: green to cyan) -->
-    <line x1="292" y1="245" x2="190" y2="330" stroke="url(#gradient3-4)" stroke-width="6" stroke-linecap="round"/>
-    
-    <!-- 4-6: Row 3 left to row 4 left (GRADIENT: cyan to blue) -->
-    <line x1="190" y1="330" x2="165" y2="415" stroke="url(#gradient4-6)" stroke-width="6" stroke-linecap="round"/>
-    <!-- 5-8: Row 3 right to row 4 right (GRADIENT: cyan to green) -->
-    <line x1="322" y1="330" x2="347" y2="415" stroke="url(#gradient5-8)" stroke-width="6" stroke-linecap="round"/>
-    
-    <!-- 5-7: Row 3 right to row 4 center -->
-    <line x1="322" y1="330" x2="256" y2="415" stroke="#5ddef4" stroke-width="6" stroke-linecap="round"/>
-  </g>
-  
   <!-- Node circles on top with glow filter -->
-  <g filter="url(#nodeGlow)">
-    <!-- Row 2 left node (cyan) -->
-    <circle cx="220" cy="245" r="16" fill="#5ddef4"/>
-    
-    <!-- Row 2 right node (green) -->
-    <circle cx="292" cy="245" r="16" fill="#7cf4bd"/>
-    
-    <!-- Row 3 left node (cyan) -->
-    <circle cx="190" cy="330" r="16" fill="#5ddef4"/>
-    
-    <!-- Row 3 right node (cyan) -->
-    <circle cx="322" cy="330" r="16" fill="#5ddef4"/>
-    
-    <!-- Row 4 left node (blue) -->
-    <circle cx="165" cy="415" r="16" fill="#4db8e8"/>
-    
-    <!-- Row 4 center node (cyan) -->
-    <circle cx="256" cy="415" r="16" fill="#5ddef4"/>
-    
-    <!-- Row 4 right node (green) -->
-    <circle cx="347" cy="415" r="16" fill="#7cf4bd"/>
+  <g
+     id="g69"
+     transform="translate(32.45,14.55)">
+    <circle
+       cx="220"
+       cy="245"
+       r="25"
+       fill="url(#cyanGlow)"
+       id="circle26"
+       style="fill:url(#radialGradient78)" />
+    <circle
+       cx="220"
+       cy="242.45139"
+       r="16"
+       fill="#5ddef4"
+       id="circle37"
+       style="filter:url(#nodeGlow)" />
   </g>
-  
+  <g
+     id="g70"
+     transform="translate(37.55,14.55)">
+    <circle
+       cx="292"
+       cy="245"
+       r="25"
+       fill="url(#greenGlow)"
+       id="circle27"
+       style="fill:url(#radialGradient79)" />
+    <circle
+       cx="292"
+       cy="242.45139"
+       r="16"
+       fill="#7cf4bd"
+       id="circle38"
+       style="filter:url(#nodeGlow)" />
+  </g>
+  <g
+     id="g71"
+     transform="translate(49,6.55)">
+    <circle
+       cx="190"
+       cy="330"
+       r="25"
+       fill="url(#cyanGlow)"
+       id="circle28"
+       style="fill:url(#radialGradient75)" />
+    <circle
+       cx="190"
+       cy="327.45139"
+       r="16"
+       fill="#5ddef4"
+       id="circle39"
+       style="filter:url(#nodeGlow)" />
+  </g>
+  <g
+     id="g72"
+     transform="translate(21,6.55)">
+    <circle
+       cx="322"
+       cy="330"
+       r="25"
+       fill="url(#cyanGlow)"
+       id="circle29"
+       style="fill:url(#radialGradient80)" />
+    <circle
+       cx="322"
+       cy="327.45139"
+       r="16"
+       fill="#5ddef4"
+       id="circle40"
+       style="filter:url(#nodeGlow)" />
+  </g>
+  <g
+     id="g73"
+     transform="translate(37.55,11)">
+    <circle
+       cx="165"
+       cy="400"
+       r="25"
+       fill="url(#blueGlow)"
+       id="circle30"
+       style="fill:url(#blueGlow)" />
+    <circle
+       cx="165"
+       cy="400"
+       r="16"
+       fill="#4db8e8"
+       id="circle41"
+       style="filter:url(#nodeGlow)" />
+  </g>
+  <g
+     id="g74"
+     transform="translate(35,-1.45)">
+    <circle
+       cx="256"
+       cy="415"
+       r="25"
+       fill="url(#cyanGlow)"
+       id="circle31"
+       style="fill:url(#radialGradient76)" />
+    <circle
+       cx="256"
+       cy="412.45139"
+       r="16"
+       fill="#5ddef4"
+       id="circle42"
+       style="filter:url(#nodeGlow)" />
+  </g>
+  <g
+     id="g75"
+     transform="translate(32.45,-1.45)">
+    <circle
+       cx="347"
+       cy="415"
+       r="25"
+       fill="url(#greenGlow)"
+       id="circle32"
+       style="fill:url(#radialGradient77)" />
+    <circle
+       cx="347"
+       cy="412.45139"
+       r="16"
+       fill="#7cf4bd"
+       id="circle43"
+       style="filter:url(#nodeGlow)" />
+  </g>
   <!-- Bottom horizontal lines - ABSOLUTE LAST (top of everything) -->
   <!-- Using rectangles instead of lines to work around browser gradient bug -->
-  <g filter="url(#lineGlow)">
-    <!-- 6-7: Bottom triangle left (GRADIENT: blue to cyan) - as rectangle -->
-    <rect x="165" y="412" width="91" height="6" rx="3" fill="url(#gradient6-7)"/>
-    <!-- 7-8: Bottom triangle right (GRADIENT: cyan to green) - as rectangle -->
-    <rect x="256" y="412" width="91" height="6" rx="3" fill="url(#gradient7-8)"/>
-  </g>
-  
+  <rect
+     x="169.2477"
+     y="398.40741"
+     width="91"
+     height="6"
+     rx="3"
+     fill="url(#gradient6-7)"
+     id="rect43"
+     style="fill:url(#linearGradient84);filter:url(#lineGlow)"
+     transform="matrix(0.971978,0,0,1,38.04,9.59)" />
+  <rect
+     x="223.36853"
+     y="353.96576"
+     width="91"
+     height="6.41"
+     rx="3"
+     fill="url(#gradient6-7)"
+     id="rect43-2"
+     style="fill:url(#linearGradient82);filter:url(#lineGlow-4)"
+     transform="matrix(0.400549,-0.846154,0.846154,0.400549,-189.14,456.94)" />
+  <rect
+     x="223.36853"
+     y="353.96576"
+     width="91"
+     height="6.34"
+     rx="3"
+     fill="#5ddef4"
+     id="rect43-2-6"
+     style="filter:url(#lineGlow)"
+     transform="matrix(0.423626,-0.846154,0.846154,0.423626,-144.44,294.68)" />
+  <rect
+     x="223.36853"
+     y="353.96576"
+     width="91"
+     height="5.88"
+     rx="3"
+     fill="#5ddef4"
+     id="rect43-2-6-0"
+     style="filter:url(#lineGlow-43)"
+     transform="matrix(0.571429,-0.846154,0.846154,0.571429,-138.55,396.12)" />
+  <rect
+     x="260.24771"
+     y="398.40741"
+     width="91"
+     height="6"
+     rx="3"
+     fill="url(#gradient7-8)"
+     id="rect44"
+     style="fill:url(#linearGradient85);filter:url(#lineGlow)"
+     transform="matrix(0.971978,0,0,1,38.04,9.59)" />
+  <rect
+     x="214.52362"
+     y="289.88007"
+     width="91"
+     height="4.59"
+     rx="3"
+     fill="url(#gradient7-8)"
+     id="rect44-8"
+     style="fill:url(#linearGradient83);filter:url(#lineGlow-2)"
+     transform="matrix(0.995055,-0.846154,0.846154,0.995055,-221.69,224.79)" />
+  <rect
+     x="214.52362"
+     y="289.88007"
+     width="91"
+     height="6.34"
+     rx="3"
+     fill="url(#gradient7-8)"
+     id="rect44-8-1"
+     style="fill:url(#linearGradient83-2);filter:url(#lineGlow-2-2)"
+     transform="matrix(0.423626,0.846154,-0.846154,0.423626,448.09,-125.66)" />
+  <rect
+     x="351.61853"
+     y="327.07452"
+     width="91"
+     height="6.41"
+     rx="3"
+     fill="url(#gradient7-8)"
+     id="rect44-2"
+     style="fill:url(#linearGradient81);filter:url(#lineGlow-5)"
+     transform="matrix(0.400549,0.846154,-0.846154,0.400549,481.63,-95.82)" />
   <!-- Star at top with glow -->
-  <g filter="url(#starGlow)">
-    <path d="M 256 150 L 262 165 L 278 168 L 267 179 L 270 195 L 256 188 L 242 195 L 245 179 L 234 168 L 250 165 Z" 
-          fill="#5ddef4"/>
+  <g
+     filter="url(#starGlow)"
+     id="g45"
+     transform="translate(35,10)">
+    <path
+       d="m 256,150 6,15 16,3 -11,11 3,16 -14,-7 -14,7 3,-16 -11,-11 16,-3 z"
+       fill="#5ddef4"
+       id="path44" />
     <!-- Inner bright star -->
-    <path d="M 256 155 L 261 167 L 273 169 L 264.5 177.5 L 267 190 L 256 183.5 L 245 190 L 247.5 177.5 L 239 169 L 251 167 Z" 
-          fill="#ffffff"/>
+    <path
+       d="m 256,155 5,12 12,2 -8.5,8.5 2.5,12.5 -11,-6.5 -11,6.5 2.5,-12.5 -8.5,-8.5 12,-2 z"
+       fill="#ffffff"
+       id="path45" />
   </g>
 </svg>

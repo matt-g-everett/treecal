@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a2540;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#051627;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Line gradients (decimal notation 0-1) -->
+    <linearGradient id="gradient3-4" x1="1" x2="0" y1="0" y2="1">
+      <stop offset="0%" style="stop-color:#7cf4bd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="gradient4-6" x1="1" x2="0" y1="0" y2="1">
+      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4db8e8;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="gradient6-7" x1="0" x2="1" y1="0.5" y2="0.5">
+      <stop offset="0%" style="stop-color:#4db8e8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="gradient7-8" x1="0" x2="1" y1="0.5" y2="0.5">
+      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7cf4bd;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="gradient5-8" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7cf4bd;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glow filters -->
+    <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Radial gradients for outer glow circles -->
+    <radialGradient id="cyanGlow">
+      <stop offset="0%" style="stop-color:#5ddef4;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:0" />
+    </radialGradient>
+    
+    <radialGradient id="greenGlow">
+      <stop offset="0%" style="stop-color:#7cf4bd;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#7cf4bd;stop-opacity:0" />
+    </radialGradient>
+    
+    <radialGradient id="blueGlow">
+      <stop offset="0%" style="stop-color:#4db8e8;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#4db8e8;stop-opacity:0" />
+    </radialGradient>
+    
+    <radialGradient id="starWhiteGlow">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#5ddef4;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#5ddef4;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background rounded rectangle -->
+  <rect x="20" y="20" width="472" height="472" rx="100" ry="100" fill="url(#bgGradient)"/>
+  
+  <!-- Define node positions - adjusted to match original more precisely -->
+  <!-- Star: 256, 170 -->
+  <!-- Row 2: 220, 245 (left) and 292, 245 (right) -->
+  <!-- Row 3: 190, 330 (left) and 322, 330 (right) -->
+  <!-- Row 4: 165, 415 (left), 256, 415 (center), 347, 415 (right) -->
+  
+  
+  <!-- Glow circles behind everything -->
+  <circle cx="256" cy="170" r="35" fill="url(#starWhiteGlow)"/>
+  <circle cx="220" cy="245" r="25" fill="url(#cyanGlow)"/>
+  <circle cx="292" cy="245" r="25" fill="url(#greenGlow)"/>
+  <circle cx="190" cy="330" r="25" fill="url(#cyanGlow)"/>
+  <circle cx="322" cy="330" r="25" fill="url(#cyanGlow)"/>
+  <circle cx="165" cy="415" r="25" fill="url(#blueGlow)"/>
+  <circle cx="256" cy="415" r="25" fill="url(#cyanGlow)"/>
+  <circle cx="347" cy="415" r="25" fill="url(#greenGlow)"/>
+  
+  <!-- Connection lines with glow (except 6-7 and 7-8 which go last) -->
+  <g filter="url(#lineGlow)">
+    <!-- 1-2: Star to row 2 left -->
+    <line x1="256" y1="170" x2="220" y2="245" stroke="#5ddef4" stroke-width="6" stroke-linecap="round"/>
+    <!-- 1-3: Star to row 2 right -->
+    <line x1="256" y1="170" x2="292" y2="245" stroke="#7cf4bd" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- 3-4: Row 2 right to row 3 left (GRADIENT: green to cyan) -->
+    <line x1="292" y1="245" x2="190" y2="330" stroke="url(#gradient3-4)" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- 4-6: Row 3 left to row 4 left (GRADIENT: cyan to blue) -->
+    <line x1="190" y1="330" x2="165" y2="415" stroke="url(#gradient4-6)" stroke-width="6" stroke-linecap="round"/>
+    <!-- 5-8: Row 3 right to row 4 right (GRADIENT: cyan to green) -->
+    <line x1="322" y1="330" x2="347" y2="415" stroke="url(#gradient5-8)" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- 5-7: Row 3 right to row 4 center -->
+    <line x1="322" y1="330" x2="256" y2="415" stroke="#5ddef4" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Node circles on top with glow filter -->
+  <g filter="url(#nodeGlow)">
+    <!-- Row 2 left node (cyan) -->
+    <circle cx="220" cy="245" r="16" fill="#5ddef4"/>
+    
+    <!-- Row 2 right node (green) -->
+    <circle cx="292" cy="245" r="16" fill="#7cf4bd"/>
+    
+    <!-- Row 3 left node (cyan) -->
+    <circle cx="190" cy="330" r="16" fill="#5ddef4"/>
+    
+    <!-- Row 3 right node (cyan) -->
+    <circle cx="322" cy="330" r="16" fill="#5ddef4"/>
+    
+    <!-- Row 4 left node (blue) -->
+    <circle cx="165" cy="415" r="16" fill="#4db8e8"/>
+    
+    <!-- Row 4 center node (cyan) -->
+    <circle cx="256" cy="415" r="16" fill="#5ddef4"/>
+    
+    <!-- Row 4 right node (green) -->
+    <circle cx="347" cy="415" r="16" fill="#7cf4bd"/>
+  </g>
+  
+  <!-- Bottom horizontal lines - ABSOLUTE LAST (top of everything) -->
+  <!-- Using rectangles instead of lines to work around browser gradient bug -->
+  <g filter="url(#lineGlow)">
+    <!-- 6-7: Bottom triangle left (GRADIENT: blue to cyan) - as rectangle -->
+    <rect x="165" y="412" width="91" height="6" rx="3" fill="url(#gradient6-7)"/>
+    <!-- 7-8: Bottom triangle right (GRADIENT: cyan to green) - as rectangle -->
+    <rect x="256" y="412" width="91" height="6" rx="3" fill="url(#gradient7-8)"/>
+  </g>
+  
+  <!-- Star at top with glow -->
+  <g filter="url(#starGlow)">
+    <path d="M 256 150 L 262 165 L 278 168 L 267 179 L 270 195 L 256 188 L 242 195 L 245 179 L 234 168 L 250 165 Z" 
+          fill="#5ddef4"/>
+    <!-- Inner bright star -->
+    <path d="M 256 155 L 261 167 L 273 169 L 264.5 177.5 L 267 190 L 256 183.5 L 245 190 L 247.5 177.5 L 239 169 L 251 167 Z" 
+          fill="#ffffff"/>
+  </g>
+</svg>

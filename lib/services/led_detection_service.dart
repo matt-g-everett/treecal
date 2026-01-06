@@ -55,7 +55,7 @@ class _BrightnessProfile {
   });
 }
 
-/// Detected LED information
+/// Detected LED information with per-surface confidence scoring
 class DetectedLED {
   final double x;              // Original detection X
   final double y;              // Original detection Y
@@ -69,10 +69,14 @@ class DetectedLED {
   final double unweightedAvg;  // Uniform average brightness
   final double concentration;  // Brightness concentration (weightedAvg/unweightedAvg)
   final double area;
-  final double detectionConfidence;  // Is this a real LED?
   final double angularConfidence;     // How accurate is the angle?
-  final double normalizedHeight;
   final bool inConeBounds;
+
+  // Per-surface scoring
+  final double frontNormalizedHeight;  // Height assuming front surface (0=base, 1=apex)
+  final double backNormalizedHeight;   // Height assuming back surface
+  final double frontConfidence;        // Confidence score for front surface hypothesis
+  final double backConfidence;         // Confidence score for back surface hypothesis
 
   DetectedLED({
     required this.x,
@@ -87,20 +91,33 @@ class DetectedLED {
     this.unweightedAvg = 0,
     this.concentration = 1.0,
     required this.area,
-    required this.detectionConfidence,
     required this.angularConfidence,
-    required this.normalizedHeight,
     required this.inConeBounds,
+    required this.frontNormalizedHeight,
+    required this.backNormalizedHeight,
+    required this.frontConfidence,
+    required this.backConfidence,
   }) : clampedX = clampedX ?? x,
        clampedY = clampedY ?? y,
        clampedBackX = clampedBackX ?? x,
        clampedBackY = clampedBackY ?? y;
+
+  /// Best confidence across both surfaces (for display/sorting)
+  double get detectionConfidence => math.max(frontConfidence, backConfidence);
 
   /// Overall confidence for display (detection quality)
   double get displayConfidence => detectionConfidence;
 
   /// Weight for triangulation (combines detection + angular)
   double get triangulationWeight => detectionConfidence * angularConfidence;
+
+  /// Normalized height for the best surface hypothesis
+  double get normalizedHeight => frontConfidence >= backConfidence
+      ? frontNormalizedHeight
+      : backNormalizedHeight;
+
+  /// Whether back surface is the better hypothesis
+  bool get isBackSurface => backConfidence > frontConfidence;
 
   Map<String, dynamic> toJson() => {
     'x': x,
@@ -112,10 +129,17 @@ class DetectedLED {
     'was_clamped': wasClamped,
     'brightness': brightness,
     'area': area,
-    'detection_confidence': detectionConfidence,
     'angular_confidence': angularConfidence,
-    'normalized_height': normalizedHeight,
     'in_cone_bounds': inConeBounds,
+    // Per-surface scoring
+    'front_normalized_height': frontNormalizedHeight,
+    'back_normalized_height': backNormalizedHeight,
+    'front_confidence': frontConfidence,
+    'back_confidence': backConfidence,
+    // Derived values (for convenience)
+    'detection_confidence': detectionConfidence,
+    'normalized_height': normalizedHeight,
+    'is_back_surface': isBackSurface,
   };
 }
 
@@ -430,7 +454,8 @@ class LEDDetectionService {
       passedContours.add(contourPolygon);
 
       // Calculate normalized height and clamping first (needed for confidence)
-      double normalizedHeight = 0;
+      double frontNormalizedHeight = 0;
+      double backNormalizedHeight = 0;
       double coneDistanceRatio = 0;  // 0 = inside cone, >0 = how far outside
       double clampedX = cx;
       double clampedY = cy;
@@ -444,11 +469,16 @@ class LEDDetectionService {
           cx, cy, cone, originalWidth, originalHeight, sensorOrientation);
 
         // Calculate normalized height (transforms to preview space internally)
-        normalizedHeight = _calculateNormalizedHeight(
+        // This is the same 2D height for both surfaces - the detection's Y position
+        // on the cone determines its height regardless of front/back
+        frontNormalizedHeight = _calculateNormalizedHeight(
           cx, cy, cone, originalWidth, originalHeight, sensorOrientation);
 
+        // Back surface has the same visual height in 2D
+        // (the difference is in which LED index we expect at this height)
+        backNormalizedHeight = frontNormalizedHeight;
+
         // Apply clamping for both front and back surface candidates
-        // Note: clamping still uses camera coordinates for now
         final (frontClamped, backClamped) = DetectionClampingService.clampForTriangulation(
           x: cx,
           y: cy,
@@ -474,13 +504,38 @@ class LEDDetectionService {
         sampleRadius,
       );
 
-      // Calculate detection confidence based on brightness profile and vertical position
-      final detectionConfidence = _calculateDetectionConfidence(
+      // Calculate expected height for back surface
+      // Back surface LEDs are ~180° around the cone from front
+      // For a spiral, this means a different LED index would appear at this height
+      double? expectedBackNormalizedHeight;
+      if (expectedNormalizedHeight != null && totalLeds != null && totalLeds > 1) {
+        // Estimate how many LEDs represent half a rotation
+        // Assuming ~2-3 full rotations for most trees, half rotation = totalLeds / 4 to 6
+        // Using 5 rotations as typical: half rotation = totalLeds / 10
+        final halfRotationLeds = totalLeds / 10.0;
+        final backLedIndex = (expectedLedIndex! + halfRotationLeds) % totalLeds;
+        expectedBackNormalizedHeight = backLedIndex / (totalLeds - 1);
+      }
+
+      // Calculate confidence for FRONT surface hypothesis
+      final frontConfidence = _calculateDetectionConfidence(
         peakBrightness: brightnessProfile.peak,
         concentration: brightnessProfile.concentration,
         coneDistanceRatio: coneDistanceRatio,
-        detectedNormalizedHeight: normalizedHeight,
+        detectedNormalizedHeight: frontNormalizedHeight,
         expectedNormalizedHeight: expectedNormalizedHeight,
+      );
+
+      // Calculate confidence for BACK surface hypothesis
+      // Back surface LEDs are typically dimmer (light through foliage)
+      // so we apply a brightness penalty
+      final backBrightnessPenalty = 0.7;  // Back surface expected to be dimmer
+      final backConfidence = _calculateDetectionConfidence(
+        peakBrightness: brightnessProfile.peak * backBrightnessPenalty,
+        concentration: brightnessProfile.concentration,
+        coneDistanceRatio: coneDistanceRatio,
+        detectedNormalizedHeight: backNormalizedHeight,
+        expectedNormalizedHeight: expectedBackNormalizedHeight,
       );
 
       // Debug: compact confidence factors
@@ -488,13 +543,14 @@ class LEDDetectionService {
           ? '${(expectedNormalizedHeight * 100).toInt()}%'
           : '?';
       final inCone = coneDistanceRatio == 0;
+      final bestSurface = frontConfidence >= backConfidence ? 'F' : 'B';
+      final bestConf = math.max(frontConfidence, backConfidence);
       print('[LED] peak=${brightnessProfile.peak.toInt()} '
-          'wAvg=${brightnessProfile.weightedAvg.toInt()} '
-          'uAvg=${brightnessProfile.unweightedAvg.toInt()} '
           'conc=${brightnessProfile.concentration.toStringAsFixed(2)} '
-          'h=${(normalizedHeight * 100).toInt()}%/$expHStr '
-          'cone=${inCone ? "Y" : "N"}(${coneDistanceRatio.toStringAsFixed(2)}) '
-          '-> conf=${(detectionConfidence * 100).toInt()}%');
+          'h=${(frontNormalizedHeight * 100).toInt()}%/$expHStr '
+          'cone=${inCone ? "Y" : "N"} '
+          '$bestSurface:${(bestConf * 100).toInt()}% '
+          '(F:${(frontConfidence * 100).toInt()}%/B:${(backConfidence * 100).toInt()}%)');
 
       // Calculate angular confidence (how accurate is angle measurement?)
       // Use original dimensions for accurate angular calculations
@@ -520,10 +576,12 @@ class LEDDetectionService {
         unweightedAvg: brightnessProfile.unweightedAvg,
         concentration: brightnessProfile.concentration,
         area: originalArea,  // Original-scale area
-        detectionConfidence: detectionConfidence,
         angularConfidence: angularConfidence,
-        normalizedHeight: normalizedHeight,
         inConeBounds: inCone,
+        frontNormalizedHeight: frontNormalizedHeight,
+        backNormalizedHeight: backNormalizedHeight,
+        frontConfidence: frontConfidence,
+        backConfidence: backConfidence,
       ));
     }
     

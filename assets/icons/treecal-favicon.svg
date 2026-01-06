@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="121 124 340 340" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simplified favicon version - no filters/glows, solid colors, thicker lines -->
+  
+  <!-- Background -->
+  <rect x="121" y="124" width="340" height="340" rx="40" ry="40" fill="#0a2540"/>
+  
+  <!-- Connection lines (thicker for visibility) -->
+  <!-- Row4 horizontal -->
+  <line x1="202.55" y1="411" x2="291" y2="411" stroke="#4db8e8" stroke-width="8" stroke-linecap="round"/>
+  <line x1="291" y1="411" x2="379.45" y2="411" stroke="#5ddef4" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Diagonals -->
+  <line x1="202.55" y1="411" x2="239" y2="334" stroke="#5ddef4" stroke-width="8" stroke-linecap="round"/>
+  <line x1="343" y1="334" x2="291" y2="411" stroke="#5ddef4" stroke-width="8" stroke-linecap="round"/>
+  <line x1="343" y1="334" x2="379.45" y2="411" stroke="#7cf4bd" stroke-width="8" stroke-linecap="round"/>
+  <line x1="239" y1="334" x2="329.55" y2="257" stroke="#5ddef4" stroke-width="8" stroke-linecap="round"/>
+  <line x1="252.45" y1="257" x2="291" y2="180" stroke="#5ddef4" stroke-width="8" stroke-linecap="round"/>
+  <line x1="291" y1="180" x2="329.55" y2="257" stroke="#7cf4bd" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Nodes (larger for visibility) -->
+  <!-- Row 4 -->
+  <circle cx="202.55" cy="411" r="20" fill="#4db8e8"/>
+  <circle cx="291" cy="411" r="20" fill="#5ddef4"/>
+  <circle cx="379.45" cy="411" r="20" fill="#7cf4bd"/>
+  
+  <!-- Row 3 -->
+  <circle cx="239" cy="334" r="20" fill="#5ddef4"/>
+  <circle cx="343" cy="334" r="20" fill="#5ddef4"/>
+  
+  <!-- Row 2 -->
+  <circle cx="252.45" cy="257" r="20" fill="#5ddef4"/>
+  <circle cx="329.55" cy="257" r="20" fill="#7cf4bd"/>
+  
+  <!-- Star (simplified to circle with highlight) -->
+  <circle cx="291" cy="180" r="22" fill="#5ddef4"/>
+  <circle cx="291" cy="180" r="12" fill="#ffffff"/>
+</svg>
